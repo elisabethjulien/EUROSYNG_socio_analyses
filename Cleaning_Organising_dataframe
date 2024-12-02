@@ -1,0 +1,389 @@
+# # # # # # 
+# Libraries ----------------------------------------------------------------------------------------------------
+# # # # # #
+
+library(readr)
+library(dplyr)
+
+# # # # # # # # # 
+# Importing data ----------------------------------------------------------------------------------------------------
+# # # # # # # # # 
+X01_Public_perception_GoogleForm_Responses_Form_responses_1_2_ <- read_csv("C:/Users/elili/Downloads/01_Public_perception_GoogleForm (Responses) - Form responses 1 (2).csv")
+
+# # # # # # # # # # # # 
+# Tidying the data set ----------------------------------------------------------------------------------------------------
+# # # # # # # # # # # #
+
+#eliminate timestamp and date columns
+
+X01_Public_perception_GoogleForm_Responses_Form_responses_1_2_$Timestamp=NULL
+X01_Public_perception_GoogleForm_Responses_Form_responses_1_2_$Date=NULL
+
+#rename dataframe 'df', inspect df and column names
+
+df<-X01_Public_perception_GoogleForm_Responses_Form_responses_1_2_
+str(df)
+names(df)
+
+#rename columns for easier manipulations
+
+df <- df %>%
+  rename(
+    `syngnathid_prev` = `1. Have you heard about Syngnathids previously?`,
+    `perceived_knowledge` = `2. Please rate your knowledge about Syngnathids. Remember that there is no right or wrong\nanswer. We just want your honest opinion. Please tick one option.`,
+    `basictrueorfalse_a` = `3. Please rate the following statements as “True” or “False”. [I know seahorses but never heard of pipefishes]`,
+    `basictrueorfalse_b` = `3. Please rate the following statements as “True” or “False”. [I know seahorses but never heard of sea dragons]`,
+    `basictrueorfalse_c` = `3. Please rate the following statements as “True” or “False”. [I never heard of Syngnathids before]`,
+    `trueorfalse_a` = `4. Please rate the following statements as “True” or “False”. Please tick one option. [Seahorses are fishes]`,
+    `trueorfalse_b` = `4. Please rate the following statements as “True” or “False”. Please tick one option. [In this group of animals only males became pregnant]`,
+    `trueorfalse_c` = `4. Please rate the following statements as “True” or “False”. Please tick one option. [They are voracious carnivorous eating a wide variety of small prey]`,
+    `trueorfalse_d` = `4. Please rate the following statements as “True” or “False”. Please tick one option. [They are particularly vulnerable to ocean pressures and threats]`,
+    `trueorfalse_e` = `4. Please rate the following statements as “True” or “False”. Please tick one option. [They exhibit some defensive mechanisms, such as immobility and camouflage]`,
+    `trueorfalse_f` = `4. Please rate the following statements as “True” or “False”. Please tick one option. [In some cultures, they are valued items for traditional medicine or as ornaments]`,
+    `trueorfalse_g` = `4. Please rate the following statements as “True” or “False”. Please tick one option. [Many species exhibit long-term fidelity to small areas in the ocean]`,
+    `trueorfalse_h` = `4. Please rate the following statements as “True” or “False”. Please tick one option. [Most of the species live in shallow coastal habitats (seagrasses, corals, estuaries, etc.), but they can also be found offshoreestuaries, etc.), but they can also be found offshore]`,
+    `trueorfalse_i` = `4. Please rate the following statements as “True” or “False”. Please tick one option. [Generally, these animals have rapid growth and early age of maturity]`,
+    `trueorfalse_j` = `4. Please rate the following statements as “True” or “False”. Please tick one option. [Adults have few predators and tend to stay close to home]`,
+    `trueorfalse_k` = `4. Please rate the following statements as “True” or “False”. Please tick one option. [Some species engage in migration being able to move long distances]`,
+    `threatened` = `5. In general, how threatened do you think seahorses and pipefishes are by human activities\nand/or environmental impacts? Please tick one option.`, 
+    `rankthreat_a` = `6. If you considered seahorses and pipefishes as species somehow threatened, please rank\nthe following threats where 1=threat ranked most harmful to 7=threat ranked least harmful\n(scale from 1 to 7, no repeats).\n [Habitat loss and/or degradation]`, 
+    `rankthreat_b` = `6. If you considered seahorses and pipefishes as species somehow threatened, please rank\nthe following threats where 1=threat ranked most harmful to 7=threat ranked least harmful\n(scale from 1 to 7, no repeats).\n [Pollution (microplastics & heavy metals)]`, 
+    `rankthreat_c` = `6. If you considered seahorses and pipefishes as species somehow threatened, please rank\nthe following threats where 1=threat ranked most harmful to 7=threat ranked least harmful\n(scale from 1 to 7, no repeats).\n [Fishing pressure (non-selected fishing and/or by-catch)]`, 
+    `rankthreat_d` = `6. If you considered seahorses and pipefishes as species somehow threatened, please rank\nthe following threats where 1=threat ranked most harmful to 7=threat ranked least harmful\n(scale from 1 to 7, no repeats).\n [Climate change]`, 
+    `rankthreat_e` = `6. If you considered seahorses and pipefishes as species somehow threatened, please rank\nthe following threats where 1=threat ranked most harmful to 7=threat ranked least harmful\n(scale from 1 to 7, no repeats).\n [Tourism pressure (including diving)]`, 
+    `rankthreat_f` = `6. If you considered seahorses and pipefishes as species somehow threatened, please rank\nthe following threats where 1=threat ranked most harmful to 7=threat ranked least harmful\n(scale from 1 to 7, no repeats).\n [Species interactions]`, 
+    `rankthreat_g` = `6. If you considered seahorses and pipefishes as species somehow threatened, please rank\nthe following threats where 1=threat ranked most harmful to 7=threat ranked least harmful\n(scale from 1 to 7, no repeats).\n [Unsustainable trade]`, 
+    `work_ocean` = `7. Do you or any member of your household work in an industry associated with the sea\n(e.g., fishing, seafood restaurants/coffee shops, research, shipping, tourism, etc.)?\nPlease select the most appropriate answer.`, 
+    `hobbies` = `8. Do you have any ocean-related hobbies?`, 
+    `memberngo` = `9. Are you a member of an environmental and/or ocean related NGO? Please tick one option.`,
+    `contribut_a` = `10. In your opinion what are the main contributions of seahorses and pipefishes to human\nwellbeing? Please rate the following statements. [Fish stocks]`, 
+    `contribut_b` = `10. In your opinion what are the main contributions of seahorses and pipefishes to human\nwellbeing? Please rate the following statements. [Ornamental]`, 
+    `contribut_c` = `10. In your opinion what are the main contributions of seahorses and pipefishes to human\nwellbeing? Please rate the following statements. [Biochemical/Pharmaceutical]`, 
+    `contribut_d` = `10. In your opinion what are the main contributions of seahorses and pipefishes to human\nwellbeing? Please rate the following statements. [Water purification]`, 
+    `contribut_e` = `10. In your opinion what are the main contributions of seahorses and pipefishes to human\nwellbeing? Please rate the following statements. [Coastal protection]`, 
+    `contribut_f` = `10. In your opinion what are the main contributions of seahorses and pipefishes to human\nwellbeing? Please rate the following statements. [Climate regulation]`, 
+    `contribut_g` = `10. In your opinion what are the main contributions of seahorses and pipefishes to human\nwellbeing? Please rate the following statements. [Biological regulation]`, 
+    `contribut_h` = `10. In your opinion what are the main contributions of seahorses and pipefishes to human\nwellbeing? Please rate the following statements. [Nutrient cycling]`, 
+    `contribut_i` = `10. In your opinion what are the main contributions of seahorses and pipefishes to human\nwellbeing? Please rate the following statements. [Life cycle maintenance/Habitats]`, 
+    `contribut_j` = `10. In your opinion what are the main contributions of seahorses and pipefishes to human\nwellbeing? Please rate the following statements. [Symbolic and aesthetic values]`, 
+    `contribut_k` = `10. In your opinion what are the main contributions of seahorses and pipefishes to human\nwellbeing? Please rate the following statements. [Recreation/tourism]`, 
+    `contribut_l` = `10. In your opinion what are the main contributions of seahorses and pipefishes to human\nwellbeing? Please rate the following statements. [Natural & bequest values (i.e., protecting marine biodiversity for its intrinsic value and for the sake of future generations)]`, 
+    `contribut_m` = `10. In your opinion what are the main contributions of seahorses and pipefishes to human\nwellbeing? Please rate the following statements. [Other (please specify)]`,
+    `statement_a` = `11. Please rate the following statements. \nSeahorses and pipefishes can... [Help protect important coastal habitats such as seagrasses and coral gardens]`, 
+    `statement_b` = `11. Please rate the following statements. \nSeahorses and pipefishes can... [Limit access to fishing resources that have been used traditionally]`, 
+    `statement_c` = `11. Please rate the following statements. \nSeahorses and pipefishes can... [Help society rethinking and better understand sex roles]`, 
+    `statement_d` = `11. Please rate the following statements. \nSeahorses and pipefishes can... [Create jobs and income to coastal communities]`, 
+    `statement_e` = `11. Please rate the following statements. \nSeahorses and pipefishes can... [Encourage the use of sustainable fishing practices]`,
+    `statement_f` = `11. Please rate the following statements. \nSeahorses and pipefishes can... [Help to maintain the structure and well-functioning of coastal ecosystems]`, 
+    `statement_g` = `11. Please rate the following statements. \nSeahorses and pipefishes can... [Promote the consumption of seafood from sustainable aquaculture practices]`, 
+    `statement_h` = `11. Please rate the following statements. \nSeahorses and pipefishes can... [Be expensive for the region to manage]`, 
+    `statement_i` = `11. Please rate the following statements. \nSeahorses and pipefishes can... [Help protect the ocean on which all life depends]`, 
+    `statement_j` = `11. Please rate the following statements. \nSeahorses and pipefishes can... [Create conflicts between fishers and marine tourism operators]`,
+    `statement_k` = `11. Please rate the following statements. \nSeahorses and pipefishes can... [Promote ocean literacy and public engagement in marine management]`, 
+    `consump_freq` = `12. How often do you consume information about seahorses and pipefishes? Please tick one option.`,
+    `info_sources` = `13. What sources have most contributed to your current knowledge on seahorses and pipefishes? Tick\nas many as apply.`, 
+    `inform_interest` = `14. In general, how interested would you be in news/information about seahorses and\npipefishes? Please tick one option.`, 
+    `inform_conservation_interest` = `15. Are you interested in more information on things you can do to help protect seahorses and\npipefishes? Please tick one option.`,
+    `communication_audience` = `16. In your opinion, to which audiences should communication efforts be directed to have an\neffective impact on the conservation of seahorses and pipefishes? Please select 3 (three)\noptions.`, 
+    `conservation_importance` = `17. Is the conservation of seahorses/pipefishes important to you? Please tick one option.`, 
+    `will_to_engange` = `18. Would you be willing to engage in conservation initiatives to protect seahorses and\npipefishes? Please tick one option.`, 
+    `particip_a` = `19. Please consider the potential ways of public engagement in seahorse conservation and rate\nthe likelihood of you participating in each one of them? [I would actively campaign for the conservation of seahorses/pipefishes]`, 
+    `particip_b` = `19. Please consider the potential ways of public engagement in seahorse conservation and rate\nthe likelihood of you participating in each one of them? [I would participate in seahorses/pipefishes’ conservation initiatives]`,
+    `particip_c` = `19. Please consider the potential ways of public engagement in seahorse conservation and rate\nthe likelihood of you participating in each one of them? [I would select seafood products harvested with sustainable gears with no/less impact on seahorses/pipefishes]`, 
+    `particip_d` = `19. Please consider the potential ways of public engagement in seahorse conservation and rate\nthe likelihood of you participating in each one of them? [I would donate to an NGO dedicated to the conservation of seahorses/pipefishes]`,
+    `particip_e` = `19. Please consider the potential ways of public engagement in seahorse conservation and rate\nthe likelihood of you participating in each one of them? [I would participate in citizen sciences initiatives to collect data and/or help raise knowledge on seahorses/pipefishes]`, 
+    `particip_f` = `19. Please consider the potential ways of public engagement in seahorse conservation and rate\nthe likelihood of you participating in each one of them? [I would actively campaign for the creation of seahorses/pipefishes MPAs or marine sanctuaries]`,
+    `particip_g` = `19. Please consider the potential ways of public engagement in seahorse conservation and rate\nthe likelihood of you participating in each one of them? [I would invest in an apnea/diving course just to be able to see seahorses/pipefishes in the wild]`, 
+    `particip_h` = `19. Please consider the potential ways of public engagement in seahorse conservation and rate\nthe likelihood of you participating in each one of them? [I would be willing to pay a one-off lump sum to a seahorse/pipefish conservation fund]`,
+    `particip_i` = `19. Please consider the potential ways of public engagement in seahorse conservation and rate\nthe likelihood of you participating in each one of them? [I would reduce my consumption of seafood products]`, 
+    `superpower` = `20. In your opinion, what is the superpower of seahorses/pipefishes? Tick only one option.`,
+    `word` = `21. Please define in one word what do you feel when seeing (images/real) seahorses/pipefishes?`, 
+    `age` = `22. Age.Tick only one.`,
+    `gender` = `23. Gender. Tick only one.\n`, 
+    `coast` = `24. Do you live near the coast or inland? Tick only one.`,
+    `mpa_prox` = `25. Do you live close to a Marine Protected Area (MPA)?`,
+    `edu` = `26. Level of education (last year of schooling). Tick only one.`,
+    `job` = `27. Professional occupation. Tick only one.`,
+    `nat` = `28. Nationality`,
+    `add_com` = `Please add any other comments you might have about this interview.`,
+    `word_en` = `21. Word in EN`,
+    `residence` = `29. Resident or not?`)
+
+
+df <- df %>%
+  rename(N_number = `N°`)
+
+#Add a column with location of survey based on code in column 'N_number'
+
+df <- df %>%
+  mutate(location = case_when(
+    grepl("AZ", N_number, ignore.case = TRUE) ~ "azores",  # If "AZ" appears anywhere, set to "azores"
+    grepl("ES", N_number, ignore.case = TRUE) ~ "spain",   # If "ES" appears anywhere, set to "spain"
+    TRUE ~ "italy"                                        # All others default to "italy"
+  ))
+
+#ordering qualitative responses from low to high; treat 'Idk' answers as NA
+
+#19. Please consider the potential ways of public engagement in seahorse conservation and rate\nthe likelihood of you participating in each one of them?
+df$particip_a[which(df$particip_a == "I don't know/ hard to say")] <- NA
+df$particip_a <- factor(df$particip_a,
+                              levels = c("No way/ very unlikely", "Somewhat unlikely", "Somewhat likely","Very likely/ I'm in"),
+                              ordered = TRUE)
+
+df$particip_b[which(df$particip_b == "I don't know/ hard to say")] <- NA
+df$particip_b <- factor(df$particip_b,
+                        levels = c("No way/ very unlikely", "Somewhat unlikely", "Somewhat likely","Very likely/ I'm in"),
+                        ordered = TRUE)
+
+df$particip_c[which(df$particip_c == "I don't know/ hard to say")] <- NA
+df$particip_c <- factor(df$particip_c,
+                        levels = c("No way/ very unlikely", "Somewhat unlikely", "Somewhat likely","Very likely/ I'm in"),
+                        ordered = TRUE)
+
+df$particip_d[which(df$particip_d == "I don't know/ hard to say")] <- NA
+df$particip_d <- factor(df$particip_d,
+                        levels = c("No way/ very unlikely", "Somewhat unlikely", "Somewhat likely","Very likely/ I'm in"),
+                        ordered = TRUE)
+
+df$particip_e[which(df$particip_e == "I don't know/ hard to say")] <- NA
+df$particip_e <- factor(df$particip_e,
+                        levels = c("No way/ very unlikely", "Somewhat unlikely", "Somewhat likely","Very likely/ I'm in"),
+                        ordered = TRUE)
+
+df$particip_f[which(df$particip_f == "I don't know/ hard to say")] <- NA
+df$particip_f <- factor(df$particip_f,
+                        levels = c("No way/ very unlikely", "Somewhat unlikely", "Somewhat likely","Very likely/ I'm in"),
+                        ordered = TRUE)
+
+df$particip_g[which(df$particip_g == "I don't know/ hard to say")] <- NA
+df$particip_g <- factor(df$particip_g,
+                        levels = c("No way/ very unlikely", "Somewhat unlikely", "Somewhat likely","Very likely/ I'm in"),
+                        ordered = TRUE)
+
+df$particip_h[which(df$particip_h == "I don't know/ hard to say")] <- NA
+df$particip_h <- factor(df$particip_h,
+                        levels = c("No way/ very unlikely", "Somewhat unlikely", "Somewhat likely","Very likely/ I'm in"),
+                        ordered = TRUE)
+
+df$particip_i[which(df$particip_i == "I don't know/ hard to say")] <- NA
+df$particip_i <- factor(df$particip_i,
+                        levels = c("No way/ very unlikely", "Somewhat unlikely", "Somewhat likely","Very likely/ I'm in"),
+                        ordered = TRUE)
+unique_answers <- df %>%
+distinct(contribut_a) %>%
+  pull(contribut_a)
+
+print(unique_answers)
+
+df$contribut_a[which(df$contribut_a == "I don't know/ hard to say")] <- NA
+df$contribut_a <- factor(df$contribut_a,
+                        levels = c("No benefit", "Slight benefit", "Moderately beneficial","Very beneficial", "Extremely beneficial"),
+                        ordered = TRUE)
+
+df$contribut_b[which(df$contribut_b == "I don't know/ hard to say")] <- NA
+df$contribut_b <- factor(df$contribut_b,
+                         levels = c("No benefit", "Slight benefit", "Moderately beneficial","Very beneficial", "Extremely beneficial"),
+                         ordered = TRUE)
+
+df$contribut_c[which(df$contribut_c == "I don't know/ hard to say")] <- NA
+df$contribut_c <- factor(df$contribut_c,
+                         levels = c("No benefit", "Slight benefit", "Moderately beneficial","Very beneficial", "Extremely beneficial"),
+                         ordered = TRUE)
+
+
+df$contribut_d[which(df$contribut_d == "I don't know/ hard to say")] <- NA
+df$contribut_d <- factor(df$contribut_d,
+                         levels = c("No benefit", "Slight benefit", "Moderately beneficial","Very beneficial", "Extremely beneficial"),
+                         ordered = TRUE)
+
+
+df$contribut_e[which(df$contribut_e == "I don't know/ hard to say")] <- NA
+df$contribut_e <- factor(df$contribut_e,
+                         levels = c("No benefit", "Slight benefit", "Moderately beneficial","Very beneficial", "Extremely beneficial"),
+                         ordered = TRUE)
+
+
+df$contribut_f[which(df$contribut_f == "I don't know/ hard to say")] <- NA
+df$contribut_f <- factor(df$contribut_f,
+                         levels = c("No benefit", "Slight benefit", "Moderately beneficial","Very beneficial", "Extremely beneficial"),
+                         ordered = TRUE)
+
+
+df$contribut_g[which(df$contribut_g == "I don't know/ hard to say")] <- NA
+df$contribut_g <- factor(df$contribut_g,
+                         levels = c("No benefit", "Slight benefit", "Moderately beneficial","Very beneficial", "Extremely beneficial"),
+                         ordered = TRUE)
+
+
+df$contribut_h[which(df$contribut_h == "I don't know/ hard to say")] <- NA
+df$contribut_h <- factor(df$contribut_h,
+                         levels = c("No benefit", "Slight benefit", "Moderately beneficial","Very beneficial", "Extremely beneficial"),
+                         ordered = TRUE)
+
+
+df$contribut_i[which(df$contribut_i == "I don't know/ hard to say")] <- NA
+df$contribut_i <- factor(df$contribut_i,
+                         levels = c("No benefit", "Slight benefit", "Moderately beneficial","Very beneficial", "Extremely beneficial"),
+                         ordered = TRUE)
+
+
+df$contribut_j[which(df$contribut_j == "I don't know/ hard to say")] <- NA
+df$contribut_j <- factor(df$contribut_j,
+                         levels = c("No benefit", "Slight benefit", "Moderately beneficial","Very beneficial", "Extremely beneficial"),
+                         ordered = TRUE)
+
+
+df$contribut_k[which(df$contribut_k == "I don't know/ hard to say")] <- NA
+df$contribut_k <- factor(df$contribut_k,
+                         levels = c("No benefit", "Slight benefit", "Moderately beneficial","Very beneficial", "Extremely beneficial"),
+                         ordered = TRUE)
+
+
+df$contribut_l[which(df$contribut_l == "I don't know/ hard to say")] <- NA
+df$contribut_l <- factor(df$contribut_l,
+                         levels = c("No benefit", "Slight benefit", "Moderately beneficial","Very beneficial", "Extremely beneficial"),
+                         ordered = TRUE)
+
+
+df$contribut_m[which(df$contribut_m == "I don't know/ hard to say")] <- NA
+df$contribut_m <- factor(df$contribut_m,
+                         levels = c("No benefit", "Slight benefit", "Moderately beneficial","Very beneficial", "Extremely beneficial"),
+                         ordered = TRUE)
+
+unique_answers <- df %>%
+  distinct(threatened) %>%
+  pull(threatened)
+
+print(unique_answers)
+
+df$threatened[which(df$threatened == "Don’t know/ Hard to say")] <- NA
+df$threatened <- factor(df$threatened,
+                         levels = c("Not at all threatened", "Slightly threatened", "Moderately threatened","Very threatened", "Extremely threatened"),
+                         ordered = TRUE)
+
+unique_answers <- df %>%
+  distinct(statement_a) %>%
+  pull(statement_a)
+
+print(unique_answers)
+
+df$statement_a[which(df$statement_a == "I don't know/ hard to say")] <- NA
+df$statement_a <- factor(df$statement_a,
+                        levels = c("Totally disagree", "Disagree", "Neither agree nor disagree","Agree", "Totally agree"),
+                        ordered = TRUE)
+
+df$statement_b[which(df$statement_b == "I don't know/ hard to say")] <- NA
+df$statement_b <- factor(df$statement_b,
+                         levels = c("Totally disagree", "Disagree", "Neither agree nor disagree","Agree", "Totally agree"),
+                         ordered = TRUE)
+
+df$statement_c[which(df$statement_c == "I don't know/ hard to say")] <- NA
+df$statement_c <- factor(df$statement_c,
+                         levels = c("Totally disagree", "Disagree", "Neither agree nor disagree","Agree", "Totally agree"),
+                         ordered = TRUE)
+
+df$statement_d[which(df$statement_d == "I don't know/ hard to say")] <- NA
+df$statement_d <- factor(df$statement_d,
+                         levels = c("Totally disagree", "Disagree", "Neither agree nor disagree","Agree", "Totally agree"),
+                         ordered = TRUE)
+
+df$statement_e[which(df$statement_e == "I don't know/ hard to say")] <- NA
+df$statement_e <- factor(df$statement_e,
+                         levels = c("Totally disagree", "Disagree", "Neither agree nor disagree","Agree", "Totally agree"),
+                         ordered = TRUE)
+
+df$statement_f[which(df$statement_f == "I don't know/ hard to say")] <- NA
+df$statement_f <- factor(df$statement_f,
+                         levels = c("Totally disagree", "Disagree", "Neither agree nor disagree","Agree", "Totally agree"),
+                         ordered = TRUE)
+
+df$statement_g[which(df$statement_g == "I don't know/ hard to say")] <- NA
+df$statement_g <- factor(df$statement_g,
+                         levels = c("Totally disagree", "Disagree", "Neither agree nor disagree","Agree", "Totally agree"),
+                         ordered = TRUE)
+
+df$statement_h[which(df$statement_h == "I don't know/ hard to say")] <- NA
+df$statement_h <- factor(df$statement_h,
+                         levels = c("Totally disagree", "Disagree", "Neither agree nor disagree","Agree", "Totally agree"),
+                         ordered = TRUE)
+
+df$statement_i[which(df$statement_i == "I don't know/ hard to say")] <- NA
+df$statement_i <- factor(df$statement_i,
+                         levels = c("Totally disagree", "Disagree", "Neither agree nor disagree","Agree", "Totally agree"),
+                         ordered = TRUE)
+
+df$statement_j[which(df$statement_j == "I don't know/ hard to say")] <- NA
+df$statement_j <- factor(df$statement_j,
+                         levels = c("Totally disagree", "Disagree", "Neither agree nor disagree","Agree", "Totally agree"),
+                         ordered = TRUE)
+
+df$statement_k[which(df$statement_k == "I don't know/ hard to say")] <- NA
+df$statement_k <- factor(df$statement_k,
+                         levels = c("Totally disagree", "Disagree", "Neither agree nor disagree","Agree", "Totally agree"),
+                         ordered = TRUE)
+
+
+unique_answers <- df %>%
+  distinct(trueorfalse_a) %>%
+  pull(trueorfalse_a)
+
+df$trueorfalse_a[which(df$trueorfalse_a == "I don't know")] <- NA
+df$trueorfalse_b[which(df$trueorfalse_b == "I don't know")] <- NA
+df$trueorfalse_c[which(df$trueorfalse_c == "I don't know")] <- NA
+df$trueorfalse_d[which(df$trueorfalse_d == "I don't know")] <- NA
+df$trueorfalse_e[which(df$trueorfalse_e == "I don't know")] <- NA
+df$trueorfalse_f[which(df$trueorfalse_f == "I don't know")] <- NA
+df$trueorfalse_g[which(df$trueorfalse_g == "I don't know")] <- NA
+df$trueorfalse_h[which(df$trueorfalse_h == "I don't know")] <- NA
+df$trueorfalse_i[which(df$trueorfalse_i == "I don't know")] <- NA
+df$trueorfalse_j[which(df$trueorfalse_j == "I don't know")] <- NA
+df$trueorfalse_k[which(df$trueorfalse_k == "I don't know")] <- NA
+
+
+columns_to_check <- c("trueorfalse_a", "trueorfalse_b", "trueorfalse_c", "trueorfalse_d", 
+                      "trueorfalse_e", "trueorfalse_f", "trueorfalse_g", "trueorfalse_h", 
+                      "trueorfalse_i", "trueorfalse_j", "trueorfalse_k")
+
+# Use rowSums to count the number of TRUE values per row, add a column with number of right answers "TRUE"
+df$right_answers <- rowSums(df[columns_to_check] == TRUE, na.rm = TRUE)
+
+unique_answers <- df %>%
+  distinct(right_answers) %>%
+  pull(right_answers)
+
+print(unique_answers)
+
+unique_answers <- df %>%
+  distinct(gender) %>%
+  pull(gender)
+
+print(unique_answers)
+
+df$gender <- ifelse(df$gender == "Male", 0, 
+                            ifelse(df$gender == "Female", 1, 
+                                   ifelse(df$gender == "Other", "2", df$gender)))
+
+df$age <- as.factor(df$age)
+unique_answers <- df %>%
+  distinct(age) %>%
+  pull(age)
+
+print(unique_answers)
+
+df$age[which(df$age == "18-25, 26-35")] <- NA
+
+df$age <- factor(df$age,
+                         levels = c("18-25", "26-35", "36-45","46-55", "56-65", "+65"),
+                         ordered = TRUE)
+
+
+df$edu <- as.factor(df$edu)
+unique_answers <- df %>%
+  distinct(edu) %>%
+  pull(edu)
+
+print(unique_answers)
+
+df$edu <- factor(df$edu,
+                 levels = c("Primary", "Secondary", "Professional qualification","College/University Degree (B.Sc., B.A., etc)", "Post-Graduate Education (M.A., Ph.D., etc)"),
+                 ordered = TRUE)
