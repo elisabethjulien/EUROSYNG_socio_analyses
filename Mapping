@@ -1,0 +1,42 @@
+library(rnaturalearth)
+library(remotes)
+library(ggplot2)
+library(devtools)
+library(tidyverse)
+library(ggthemes) 
+library(ggalt)
+library(ggrepel)  # for annotations
+library(viridis)  # for nice colours
+library(broom)
+library(treemapify)  # for making area graphs
+library(wesanderson)
+library(sf
+
+#select territories of interest (where surveys were conducted + to fill awkward blanks)
+europe <- map_data("world", region = c("Portugal","Canary Islands", "Spain", "Azores", "Italy", "France", "Switzerland"))
+
+#make a simple dataframe with coordinates of locations of surveying, with number of surveys conducted per place
+lter <- data.frame(
+  place = c("Azores, n=295","Portugal, n=30","Galicia, n=60", "Sicily, n=29", "Canarias, n=9", "Bari, n=191"),
+  x = c(-28.244,-9, -8, 14.616, -15, 16.8),  # Replace with accurate longitudes if needed
+  y = c(38.722, 39,42.5, 38, 28, 41),   # Replace with accurate latitudes if needed
+  number = c(250,50, 100, 50, 50, 200)         # New column with specified numbers
+)
+
+#make a map
+lter_map6 <- ggplot() +
+  geom_map(map = europe, data = europe, colour = "lightgrey",size=0.1,
+           aes(long, lat, map_id = region),
+           ylim = c(25, 80), xlim = c(-175, -50))+
+  geom_point(data = lter,
+             aes(x = x, y = y, fill = number, size = number),  # Map 'size' to 'number' column
+             alpha = 0.8, colour = "white", shape = 21) +
+  scale_size(range = c(2, 15)) +  # Adjust size range based on 'number'
+  theme_minimal() +  # Use a minimal theme instead of theme_map()
+  theme(legend.position = "bottom") +
+  # Adding point annotations with the site name
+  geom_label_repel(data = lter,
+                   aes(x = x, y = y, label = place),
+                   # Setting the positions of the labels
+                   box.padding = 1, size = 4, nudge_x = 1, nudge_y = 1)
+plot(lter_map6)
