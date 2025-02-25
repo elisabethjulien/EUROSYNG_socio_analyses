@@ -8,7 +8,7 @@ library(dplyr)
 # # # # # # # # # 
 # Importing data ----------------------------------------------------------------------------------------------------
 # # # # # # # # # 
-X01_Public_perception_GoogleForm_Responses_Form_responses_1_2_ <- read_csv("C:/Users/elili/Downloads/01_Public_perception_GoogleForm (Responses) - Form responses 1 (2).csv")
+final_publicperception <- read_csv("C://Final_PublicPerception_Survey.csv")
 
 # # # # # # # # # # # # 
 # Tidying the data set ----------------------------------------------------------------------------------------------------
@@ -16,16 +16,16 @@ X01_Public_perception_GoogleForm_Responses_Form_responses_1_2_ <- read_csv("C:/U
 
 #eliminate timestamp and date columns
 
-X01_Public_perception_GoogleForm_Responses_Form_responses_1_2_$Timestamp=NULL
-X01_Public_perception_GoogleForm_Responses_Form_responses_1_2_$Date=NULL
-
-#rename dataframe 'df', inspect df and column names
-
-df<-X01_Public_perception_GoogleForm_Responses_Form_responses_1_2_
+final_publicperception$Timestamp=NULL
+final_publicperception$Date=NULL
+df<-final_publicperception
 str(df)
-names(df)
 
-#rename columns for easier manipulations
+#making a sub dataframe for person with interest in only results from Bari, Italy
+#PP_Bari <- df[grepl("PU_RI", df$N_number), ]
+#write.csv(PP_Bari, "C:/Users/elili/Desktop/NATURALIST/hppocampus/hippocampus_socio/PP_Bari.csv", row.names = FALSE)
+
+names(df)
 
 df <- df %>%
   rename(
@@ -113,62 +113,81 @@ df <- df %>%
 df <- df %>%
   rename(N_number = `N°`)
 
-#Add a column with location of survey based on code in column 'N_number'
-
 df <- df %>%
   mutate(location = case_when(
-    grepl("AZ", N_number, ignore.case = TRUE) ~ "azores",  # If "AZ" appears anywhere, set to "azores"
-    grepl("ES", N_number, ignore.case = TRUE) ~ "spain",   # If "ES" appears anywhere, set to "spain"
+    grepl("AZ", N_number, ignore.case = TRUE) ~ "portugal (azores)",# If "AZ" appears anywhere, set to "azores"
+    grepl("PT", N_number, ignore.case = TRUE) ~ "portugal (mainland)",
+    grepl("ES", N_number, ignore.case = TRUE) ~ "spain",
+    grepl("BE", N_number, ignore.case =TRUE) ~ "belgium",
+    grepl("SE", N_number, ignore.case =TRUE) ~ "sweden",# If "ES" appears anywhere, set to "spain"
     TRUE ~ "italy"                                        # All others default to "italy"
   ))
 
-#ordering qualitative responses from low to high; treat 'Idk' answers as NA
+unique_answers <- df %>%
+  distinct(location) %>%
+  pull(location)
 
-#19. Please consider the potential ways of public engagement in seahorse conservation and rate\nthe likelihood of you participating in each one of them?
-df$particip_a[which(df$particip_a == "I don't know/ hard to say")] <- NA
-df$particip_a <- factor(df$particip_a,
-                              levels = c("No way/ very unlikely", "Somewhat unlikely", "Somewhat likely","Very likely/ I'm in"),
-                              ordered = TRUE)
+print(unique_answers)
 
-df$particip_b[which(df$particip_b == "I don't know/ hard to say")] <- NA
-df$particip_b <- factor(df$particip_b,
-                        levels = c("No way/ very unlikely", "Somewhat unlikely", "Somewhat likely","Very likely/ I'm in"),
-                        ordered = TRUE)
+unique_answers <- df %>%
+  count(location)
 
-df$particip_c[which(df$particip_c == "I don't know/ hard to say")] <- NA
-df$particip_c <- factor(df$particip_c,
-                        levels = c("No way/ very unlikely", "Somewhat unlikely", "Somewhat likely","Very likely/ I'm in"),
-                        ordered = TRUE)
+print(unique_answers)
 
-df$particip_d[which(df$particip_d == "I don't know/ hard to say")] <- NA
-df$particip_d <- factor(df$particip_d,
-                        levels = c("No way/ very unlikely", "Somewhat unlikely", "Somewhat likely","Very likely/ I'm in"),
-                        ordered = TRUE)
+#ordering responses
+#19. Please consider the potential ways of public engagement in seahorse conservation and rate/nthe likelihood of you participating in each one of them?
 
-df$particip_e[which(df$particip_e == "I don't know/ hard to say")] <- NA
-df$particip_e <- factor(df$particip_e,
-                        levels = c("No way/ very unlikely", "Somewhat unlikely", "Somewhat likely","Very likely/ I'm in"),
-                        ordered = TRUE)
+library(dplyr)
+library(stringr)
 
-df$particip_f[which(df$particip_f == "I don't know/ hard to say")] <- NA
-df$particip_f <- factor(df$particip_f,
-                        levels = c("No way/ very unlikely", "Somewhat unlikely", "Somewhat likely","Very likely/ I'm in"),
-                        ordered = TRUE)
+# Define a named vector for replacements
+replacement_map <- c(
+  "No way/ very unlikely" = "0",
+  "Somewhat unlikely" = "1",
+  "Somewhat likely" = "2",
+  "Very likely/ I'm in" = "3",
+  "I don't know/ hard to say" = "4"
+)
 
-df$particip_g[which(df$particip_g == "I don't know/ hard to say")] <- NA
-df$particip_g <- factor(df$particip_g,
-                        levels = c("No way/ very unlikely", "Somewhat unlikely", "Somewhat likely","Very likely/ I'm in"),
-                        ordered = TRUE)
+# Apply the replacements across all "particip_" columns
+df <- df %>%
+  mutate(across(starts_with("particip_"), 
+                ~ str_replace_all(., replacement_map))) %>%
+  mutate(across(starts_with("particip_"), 
+                ~ ifelse(. %in% c("0", "1", "2", "3", "4"), ., NA)))
 
-df$particip_h[which(df$particip_h == "I don't know/ hard to say")] <- NA
-df$particip_h <- factor(df$particip_h,
-                        levels = c("No way/ very unlikely", "Somewhat unlikely", "Somewhat likely","Very likely/ I'm in"),
-                        ordered = TRUE)
+unique_answers <- df %>%
+  distinct(particip_c) %>%
+  pull(particip_c)
 
-df$particip_i[which(df$particip_i == "I don't know/ hard to say")] <- NA
-df$particip_i <- factor(df$particip_i,
-                        levels = c("No way/ very unlikely", "Somewhat unlikely", "Somewhat likely","Very likely/ I'm in"),
-                        ordered = TRUE)
+print(unique_answers)
+
+
+score_map <- c(
+  `No way/ very unlikely` = 1,
+  `Somewhat unlikely` = 2,
+  `Somewhat likely` = 3,
+  `Very likely/ I'm in` = 4
+)
+
+df$contrib_total=NULL
+
+# Add a new column 'contrib_total' with the total score
+df <- df %>%
+  mutate(particip_total = apply(select(df, particip_a:particip_i), 1, function(x) sum(x %in% c(3, 4), na.rm = TRUE)))
+
+df <- df %>%
+  mutate(participtotal_integer = particip_total / sum(particip_total, na.rm = TRUE))
+
+df <- df %>%
+  mutate(particip_binary = ifelse(participtotal_integer > 0.5, 1, 0))
+
+unique_answers <- df %>%
+  distinct(particip_binary) %>%
+  pull(particip_binary)
+
+print(unique_answers)
+
 unique_answers <- df %>%
 distinct(contribut_a) %>%
   pull(contribut_a)
@@ -344,7 +363,7 @@ columns_to_check <- c("trueorfalse_a", "trueorfalse_b", "trueorfalse_c", "trueor
                       "trueorfalse_e", "trueorfalse_f", "trueorfalse_g", "trueorfalse_h", 
                       "trueorfalse_i", "trueorfalse_j", "trueorfalse_k")
 
-# Use rowSums to count the number of TRUE values per row, add a column with number of right answers "TRUE"
+# Use rowSums to count the number of TRUE values per row
 df$right_answers <- rowSums(df[columns_to_check] == TRUE, na.rm = TRUE)
 
 unique_answers <- df %>%
@@ -352,6 +371,8 @@ unique_answers <- df %>%
   pull(right_answers)
 
 print(unique_answers)
+df$right_answers <- df$right_answers / 11
+
 
 unique_answers <- df %>%
   distinct(gender) %>%
@@ -371,6 +392,7 @@ unique_answers <- df %>%
 print(unique_answers)
 
 df$age[which(df$age == "18-25, 26-35")] <- NA
+df$age[which(df$age == "26-35, 36-45")] <- NA
 
 df$age <- factor(df$age,
                          levels = c("18-25", "26-35", "36-45","46-55", "56-65", "+65"),
@@ -387,3 +409,227 @@ print(unique_answers)
 df$edu <- factor(df$edu,
                  levels = c("Primary", "Secondary", "Professional qualification","College/University Degree (B.Sc., B.A., etc)", "Post-Graduate Education (M.A., Ph.D., etc)"),
                  ordered = TRUE)
+
+
+unique_answers <- df %>%
+  distinct(memberngo) %>%
+  pull(memberngo)
+
+print(unique_answers)
+
+df$memberngo <- ifelse(df$memberngo== "No", 0, 
+                    ifelse(df$memberngo == "Yes", 1, NA))
+
+unique_answers <- df %>%
+  distinct(coast) %>%
+  pull(coast)
+
+print(unique_answers)
+
+df$coast <- ifelse(df$coast== "Inland", 0, 
+                       ifelse(df$coast == "Coast", 1, NA))
+
+unique_answers <- df %>%
+  distinct(syngnathid_prev) %>%
+  pull(syngnathid_prev)
+
+print(unique_answers)
+
+df$syngnathid_prev <- ifelse(df$syngnathid_prev== "No", 0, 
+                   ifelse(df$syngnathid_prev== "Yes", 1, NA))
+                 
+unique_answers <- df %>%
+  distinct(nat) %>%
+  pull(nat)
+
+print(unique_answers)
+
+df <- df %>% 
+  mutate(nat = case_when(
+    nat == "french" ~ "FRA",
+    nat == "FR" ~ "FRA",
+    nat == "GER" ~ "DEU",
+    nat == "POR" ~ "PRT",
+    nat == "Alemanha" ~ "DEU",
+    nat == "PT" ~ "PRT",
+    nat == "SUI" ~ "CHE",
+    nat == "BE" ~ "BEL",
+    nat == "german" ~ "DEU",
+    nat == "IT" ~ "ITA",
+    nat == "MOROCCO" ~ "MAR",
+    nat == "ES" ~ "ESP",
+    nat == "italian" ~ "ITA",
+    nat == "turkish" ~ "TUR",
+    nat == "BR" ~ "BRA",
+    nat == "MX" ~ "MEX",
+    nat == "IE" ~ "IRL",
+    nat == "German" ~ "DEU",
+    nat == "Venezuela/ es" ~ "VEN",
+    nat == "NOrway" ~ "NOR",
+    nat == "India" ~ "IND",
+    nat == "UK" ~ "GBR",
+    nat == "Cisjordanian" ~ "PSE",
+    nat == "belgian" ~ "BEL",
+    nat == "belgium" ~ "BEL",
+    nat == "china" ~ "CHN",
+    nat== "swedish" ~ "SWE",
+    nat== "irish" ~ "IRL",
+    nat== "Spanish" ~ "ESP",
+    nat== "spanish (Madrid)" ~ "ESP",
+    nat== "spain" ~ "ESP",
+    nat== "romanian" ~ "ROU",
+    nat== "spanish (galicia)" ~ "ESP",
+    nat== "bulgarian" ~ "BGR",
+    nat== "greek" ~ "GRC",
+    nat== "colombian" ~ "COL",
+    nat== "georgia" ~ "GEO",
+    nat== "spanish" ~ "ESP",
+    nat== "dutch" ~ "NDL",
+    nat== "por" ~ "PRT",
+    
+    TRUE ~ nat  # Keeps original value if no match is found
+  ))
+
+unique_answers <- df %>%
+  distinct(nat) %>%
+  pull(nat)
+
+print(unique_answers)
+
+#df <- df %>% 
+#  mutate(perceived_knowledge = case_when(
+#    perceived_knowledge == "No knowledge" ~ "1",
+#    perceived_knowledge == "Basic knowledge" ~ "2",
+#    perceived_knowledge == "Knowledgeable" ~ "3",
+#    perceived_knowledge == "Expert knowledge" ~ "4",
+#    TRUE ~ perceived_knowledge))
+
+df$perceived_knowledge<-as.factor(df$perceived_knowledge)
+df$perceived_knowledge <- factor(df$perceived_knowledge,
+                 levels = c("No knowledge",
+                            "Basic knowledge",
+                            "I don't know/ hard to say",
+                            "Knowledgeable",
+                            "Expert knowledge"),
+                 ordered = TRUE)
+
+unique_answers <- df %>%
+  distinct(statement_a) %>%
+  pull(statement_a)
+
+print(unique_answers)
+
+unique_answers <- df %>%
+  distinct(mpa_prox) %>%
+  pull(mpa_prox)
+
+print(unique_answers)
+
+df$mpa_prox <- ifelse(df$mpa_prox == "No", 0, 
+                      ifelse(df$mpa_prox == "Yes", 1, 
+                             ifelse(df$mpa_prox == "I don't know/ hard to say", 2, NA)))
+unique_answers <- df %>%
+  distinct(work_ocean) %>%
+  pull(work_ocean)
+
+print(unique_answers)
+
+df$work_ocean <- ifelse(grepl("^no", df$work_ocean, ignore.case = TRUE), 
+                        0, 
+                        ifelse(is.na(df$work_ocean), 
+                               NA, 
+                               1))
+
+unique_answers <- df %>%
+  distinct(hobbies) %>%
+  pull(hobbies)
+
+print(unique_answers)
+
+df$hobbies <- ifelse(grepl("^no", df$hobbies, ignore.case = TRUE), 
+                        0, 
+                        ifelse(is.na(df$hobbies), 
+                               NA, 
+                               1))
+
+unique_answers <- df %>%
+  distinct(basictrueorfalse_a) %>%
+  pull(basictrueorfalse_a)
+
+print(unique_answers)
+
+df$basictrueorfalse_a<- ifelse(df$basictrueorfalse_a== "TRUE", 0, 
+                     ifelse(df$basictrueorfalse_a == "FALSE",1, NA))
+
+
+unique_answers <- df %>%
+  distinct(basictrueorfalse_b) %>%
+  pull(basictrueorfalse_b)
+
+print(unique_answers)
+
+df$basictrueorfalse_b<- ifelse(df$basictrueorfalse_b== "TRUE", 0, 
+                               ifelse(df$basictrueorfalse_b == "FALSE",1, NA))
+
+df$info_sources <- gsub("Social media \\(Facebook, Instagram, Tik tok, Twitter, etc\\.\\)", "Social Media", df$info_sources)
+df$info_sources <- gsub("Aquariums/marine sanctuaries", "Aqua", df$info_sources)
+df$info_sources <- gsub("Word of mouth/Talking with a friend/family member", "Chat", df$info_sources)
+df$info_sources <- gsub("ENSINO|University|school|escola|CLASS|educação|SCHOOL|Studies|Escola|estudos|ESCOLA|FORMACAO UNIVERSITARAI|studies", 
+                        "School", 
+                        df$info_sources)
+df$info_sources <- gsub("Scientific information/presentations", "Science", df$info_sources)
+df$info_sources <- gsub("(youtub)|youtube", "Social Media", df$info_sources)
+df$info_sources <- gsub("In nature|contato com o mar|Observation in the sea|Spending time at sea", "Sea", df$info_sources)
+df$info_sources <- gsub("diving|Working in diving", "Diving", df$info_sources)
+
+unique_values_count <- df %>%
+   group_by(`info_sources`) %>%
+  summarize(Count = n()) %>%
+  arrange(desc(Count))  # Optional: arrange by count in descending order
+
+print(n=200, unique_values_count)
+
+unique_answers <- df %>%
+  distinct(particip_a) %>%
+  pull(particip_a)
+
+print(unique_answers)
+
+unique_answers <- df %>%
+  count(job)
+
+print(unique_answers)
+
+valid_jobs <- c("Farmer", "Fisherman", "Public employee", 
+                "Private employee", "Self-employed", 
+                "Unemployed", "Student", "Homemaker", "Retired")
+
+df <- df %>%
+  mutate(
+    # Create job_other column
+    job_other = if_else(job %in% valid_jobs, job, "Other"),
+    
+    # Create job_na column
+    job_na = if_else(job %in% valid_jobs, NA_character_, job)
+  )
+
+df$job_na=NULL
+
+
+unique_answers <- df %>%
+  distinct(inform_conservation_interest) %>%
+  pull(inform_conservation_interest)
+
+print(unique_answers)
+
+df$inform_conservation_interest <- ifelse(df$inform_conservation_interest== "No", 0, 
+                             ifelse(df$inform_conservation_interest== "Yes", 1, NA))
+
+unique_answers <- df %>%
+  distinct(will_to_engange) %>%
+  pull(will_to_engange)
+
+print(unique_answers)
+
+df$will_to_engange <- ifelse(df$will_to_engange== "No", 0, 
+                                          ifelse(df$will_to_engange== "Yes", 1, NA))
