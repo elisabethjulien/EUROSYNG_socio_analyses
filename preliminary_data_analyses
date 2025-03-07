@@ -2,6 +2,21 @@
 #   Data Overview    #
 #                    #
 ######################
+# Number of response and percentage reponse for question 1. Have you heard about Syngnathids previously?
+
+df %>%
+  filter(!is.na(syngnathid_prev)) %>%  # Remove NA values
+  group_by(syngnathid_prev) %>%
+  summarise(Count = n()) %>%
+  mutate(Percentage = (Count / sum(Count)) * 100) %>%
+  arrange(desc(Percentage))  # Sort from highest to lowest
+
+# A tibble: 3 × 3
+#  syngnathid_prev Count Percentage
+#            <dbl> <int>      <dbl>
+#1               0   546      58.1 
+#2               1   357      38.0 
+#3               2    37       3.94
 
 # Number of response and percentage reponse for question 2. Please rate your knowledge about Syngnathids. 
 
