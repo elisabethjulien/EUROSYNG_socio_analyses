@@ -1,0 +1,25 @@
+######################
+#   Data Overview    #
+#                    #
+######################
+
+# Number of response and percentage reponse for question 2. Please rate your knowledge about Syngnathids. 
+
+df %>%
+  filter(!is.na(perceived_knowledge)) %>%  # Remove NA values
+  group_by(perceived_knowledge) %>%
+  summarise(Count = n()) %>%
+  mutate(Percentage = (Count / sum(Count)) * 100) %>%
+  arrange(desc(Percentage))  # Sort from highest to lowest
+
+  # A tibble: 4 × 3
+  #perceived_knowledge Count Percentage
+  #<ord>               <int>      <dbl>
+#1 No knowledge          504     55.0  
+#2 Basic knowledge       345     37.7  
+#3 Knowledgeable          61      6.66 
+#4 Expert knowledge        6      0.655
+
+ #Most respondents (55%) believe they do not have any knowledge about syngnathids, 37% think they have basic knowledge, 6.7% believe they are knowledgeable, and less than 1% of respondents consider themselves to be experts on the topic. 
+
+
