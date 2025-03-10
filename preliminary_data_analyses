@@ -81,4 +81,27 @@ df %>%
  #Most respondents (55%) believe they do not have any knowledge about syngnathids, 37% think they have basic knowledge, 6.7% believe they are knowledgeable, and less than 1% of respondents consider themselves to be experts on the topic. 
 
 ####################################################################################################################################
+# Number of response and percentage reponse for question 4. Please rate the following statements as “True” or “False”. Please tick one option.
 
+truefalse_columns <- c("trueorfalse_a", "trueorfalse_b", "trueorfalse_c", "trueorfalse_d", 
+                      "trueorfalse_e", "trueorfalse_f", "trueorfalse_g", "trueorfalse_h", 
+                      "trueorfalse_i", "trueorfalse_j", "trueorfalse_k")
+
+# Reshape data into long format and remove NA values
+df_long <- df %>%
+  select(all_of(truefalse_columns)) %>%
+  pivot_longer(cols = everything(), names_to = "question", values_to = "response") %>%
+  filter(!is.na(response))  # Exclude NA values
+
+# Count occurrences of each response per question
+summary_table <- df_long %>%
+  group_by(question, response) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  group_by(question) %>%
+  mutate(percentage = round(100 * count / sum(count), 2)) %>%
+  pivot_wider(names_from = response, values_from = c(count, percentage), values_fill = 0)
+
+# Print the summary table
+print(summary_table)
+
+####################################################################################################################################
