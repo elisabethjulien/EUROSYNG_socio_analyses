@@ -181,3 +181,20 @@ summary_table <- df %>%
 
 # Print the table
 print(summary_table)
+
+####################################################################################################################################
+# Number of response and percentage reponse for question 13. What sources have most contributed to your current knowledge on seahorses and pipefishes? 
+
+# Count occurrences and calculate percentages
+value_count <- df %>%
+  mutate(info_sources_split = strsplit(info_sources, ", ")) %>%  # Split by comma and space
+  unnest(info_sources_split) %>%  # Unnest the list into individual rows
+  group_by(info_sources_split) %>%  # Group by the individual values
+  summarise(Count = n(), .groups = "drop") %>%  # Count occurrences
+  mutate(
+    Percentage = (Count / sum(!is.na(df$info_sources))) * 100  # Calculate percentage
+  ) %>%
+  arrange(desc(Count))  # Sort by count in descending order
+
+# Print the result
+print(value_count)
