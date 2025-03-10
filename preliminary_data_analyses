@@ -220,15 +220,16 @@ sum(!is.na(df$communication_audience))
 print(value_count)
 
 ####################################################################################################################################
-# Number of response and percentage reponse for question 17. Is the conservation of seahorses/pipefishes important to you?
+# Number of response and percentage reponse for question 18. Would you be willing to engage in conservation initiatives to protect seahorses and pipefishes? 
 
 # Create summary table
 summary_table <- df %>%
-  filter(!is.na(conservation_importance)) %>%  # Remove NA values
-  group_by(conservation_importance) %>%
+  filter(!is.na(will_to_engange)) %>%  # Remove NA values
+  group_by(will_to_engange) %>%
   summarise(Frequency = n(), .groups = "drop") %>%
   mutate(Percentage = round(100 * Frequency / sum(Frequency), 2)) %>%
   arrange(desc(Frequency))  # Sort by most frequent response
 
 # Print the table
 print(summary_table)
+
