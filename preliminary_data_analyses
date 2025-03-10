@@ -2,6 +2,47 @@
 #   Data Overview    #
 #                    #
 ######################
+
+library(writexl)
+
+####################################################################################################################################
+
+#Overview of sociodemographic profiles of respondents:
+# by counting occurrence of each unique value per column of interest, then calculating it as a percentage
+
+#Summary percentage of gender
+value_counts <- table(por_df$gender)
+percentages_gender <- prop.table(value_counts) * 100
+print(percentages_gender)
+
+#Summary percentage of age
+value_counts <- table(por_df$age)
+percentages_age <- prop.table(value_counts) * 100
+print(percentages_age)
+
+#Summary percentage of education
+value_counts <- table(por_df$edu)
+percentages_education <- prop.table(value_counts) * 100
+print(percentages_education)
+
+#Summary percentage of respondents' residence's proximity to coast 
+value_counts <- table(por_df$coast)
+percentages_coast <- prop.table(value_counts) * 100
+print(percentages_coast)
+
+#Summary percentage of employment type
+value_counts <- table(por_df$job)
+percentages_job <- prop.table(value_counts) * 100
+print(percentages_job)
+
+#Summary percentage of respondents' residence's proximity to a marine proteted area
+value_counts <- table(por_df$mpa_prox)
+print(value_counts)
+percentages_mpa <- prop.table(value_counts) * 100
+print(percentages_mpa)
+
+####################################################################################################################################
+
 # Number of response and percentage reponse for question 1. Have you heard about Syngnathids previously?
 
 df %>%
@@ -17,6 +58,8 @@ df %>%
 #1               0   546      58.1 
 #2               1   357      38.0 
 #3               2    37       3.94
+
+####################################################################################################################################
 
 # Number of response and percentage reponse for question 2. Please rate your knowledge about Syngnathids. 
 
@@ -37,4 +80,5 @@ df %>%
 
  #Most respondents (55%) believe they do not have any knowledge about syngnathids, 37% think they have basic knowledge, 6.7% believe they are knowledgeable, and less than 1% of respondents consider themselves to be experts on the topic. 
 
+####################################################################################################################################
 
