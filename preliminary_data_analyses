@@ -2,7 +2,8 @@
 #   Data Overview    #
 #                    #
 ######################
-
+library(dplyr)
+library(tidyr)
 library(writexl)
 
 ####################################################################################################################################
@@ -105,3 +106,37 @@ summary_table <- df_long %>%
 print(summary_table)
 
 ####################################################################################################################################
+# Number of response and percentage reponse for question 5. In general, how threatened do you think seahorses and pipefishes are by human activities and/or environmental impacts? 
+
+# Count occurrences and calculate percentages
+summary_table <- df %>%
+  filter(!is.na(threatened)) %>%  # Remove NA values
+  group_by(threatened) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  mutate(percentage = round(100 * count / sum(count), 2)) %>%
+  arrange(desc(count))  # Sort by count in descending order
+
+# Print the table
+print(summary_table)
+
+####################################################################################################################################
+# Number of response and percentage reponse for question 6. If you considered seahorses and pipefishes as species somehow threatened, please rank the following threats where 1=threat ranked most harmful to 7=threat ranked least harmful (scale from 1 to 7, no repeats).
+
+
+# Define columns to check
+rankthreat_columns <- c("rankthreat_a", "rankthreat_b", "rankthreat_c", "rankthreat_d", 
+                        "rankthreat_e", "rankthreat_f", "rankthreat_g")
+
+# Create summary table
+summary_table <- data.frame(
+  Column = rankthreat_columns,
+  Sum = sapply(rankthreat_columns, function(col) sum(df[[col]], na.rm = TRUE)),
+  Count_Non_NA = sapply(rankthreat_columns, function(col) sum(!is.na(df[[col]]))), # Count of non-NA responses
+  Sum_Per_Total = sapply(rankthreat_columns, function(col) 
+    sum(df[[col]], na.rm = TRUE) / sum(!is.na(df[[col]]))
+  )
+)
+
+# Print the table
+print(summary_table)
+
