@@ -155,6 +155,23 @@ summary_table <- df %>%
 print(summary_table)
 
 ####################################################################################################################################
+# Number of response and percentage reponse for question 13. What sources have most contributed to your current knowledge on seahorses and pipefishes? 
+
+# Count occurrences and calculate percentages
+value_count <- df %>%
+  mutate(info_sources_split = strsplit(info_sources, ", ")) %>%  # Split by comma and space
+  unnest(info_sources_split) %>%  # Unnest the list into individual rows
+  group_by(info_sources_split) %>%  # Group by the individual values
+  summarise(Count = n(), .groups = "drop") %>%  # Count occurrences
+  mutate(
+    Percentage = (Count / sum(!is.na(df$info_sources))) * 100  # Calculate percentage
+  ) %>%
+  arrange(desc(Count))  # Sort by count in descending order
+
+# Print the result
+print(value_count)
+
+####################################################################################################################################
 # Number of response and percentage reponse for question 14. In general, how interested would you be in news/information about seahorses and pipefishes? 
 
 # Create summary table
@@ -183,18 +200,35 @@ summary_table <- df %>%
 print(summary_table)
 
 ####################################################################################################################################
-# Number of response and percentage reponse for question 13. What sources have most contributed to your current knowledge on seahorses and pipefishes? 
+# Number of response and percentage reponse for question 16. In your opinion, to which audiences should communication efforts be directed to have an effective impact on the conservation of seahorses and pipefishes? 
 
 # Count occurrences and calculate percentages
 value_count <- df %>%
-  mutate(info_sources_split = strsplit(info_sources, ", ")) %>%  # Split by comma and space
-  unnest(info_sources_split) %>%  # Unnest the list into individual rows
-  group_by(info_sources_split) %>%  # Group by the individual values
+  mutate(communication_audience_split = strsplit(communication_audience, ", ")) %>%  # Split by comma and space
+  unnest(communication_audience_split) %>%  # Unnest the list into individual rows
+  group_by(communication_audience_split) %>%  # Group by the individual values
   summarise(Count = n(), .groups = "drop") %>%  # Count occurrences
   mutate(
-    Percentage = (Count / sum(!is.na(df$info_sources))) * 100  # Calculate percentage
+    Percentage = (Count / sum(!is.na(df$communication_audience))) * 100  # Calculate percentage
   ) %>%
   arrange(desc(Count))  # Sort by count in descending order
 
+
+sum(!is.na(df$communication_audience))
+    
 # Print the result
 print(value_count)
+
+####################################################################################################################################
+# Number of response and percentage reponse for question 17. Is the conservation of seahorses/pipefishes important to you?
+
+# Create summary table
+summary_table <- df %>%
+  filter(!is.na(conservation_importance)) %>%  # Remove NA values
+  group_by(conservation_importance) %>%
+  summarise(Frequency = n(), .groups = "drop") %>%
+  mutate(Percentage = round(100 * Frequency / sum(Frequency), 2)) %>%
+  arrange(desc(Frequency))  # Sort by most frequent response
+
+# Print the table
+print(summary_table)
