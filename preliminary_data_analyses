@@ -140,3 +140,44 @@ summary_table <- data.frame(
 # Print the table
 print(summary_table)
 
+####################################################################################################################################
+# Number of response and percentage reponse for question 12. How often do you consume information about seahorses and pipefishes? Please tick one option.
+
+# Create summary table
+summary_table <- df %>%
+  filter(!is.na(consump_freq)) %>%  # Remove NA values
+  group_by(consump_freq) %>%
+  summarise(Frequency = n(), .groups = "drop") %>%
+  mutate(Percentage = round(100 * Frequency / sum(Frequency), 2)) %>%
+  arrange(desc(Frequency))  # Sort by most frequent response
+
+# Print the table
+print(summary_table)
+
+####################################################################################################################################
+# Number of response and percentage reponse for question 14. In general, how interested would you be in news/information about seahorses and pipefishes? 
+
+# Create summary table
+summary_table <- df %>%
+  filter(!is.na(inform_interest)) %>%  # Remove NA values
+  group_by(inform_interest) %>%
+  summarise(Frequency = n(), .groups = "drop") %>%
+  mutate(Percentage = round(100 * Frequency / sum(Frequency), 2)) %>%
+  arrange(desc(Frequency))  # Sort by most frequent response
+
+# Print the table
+print(summary_table)
+
+####################################################################################################################################
+# Number of response and percentage reponse for question 15. Are you interested in more information on things you can do to help protect seahorses and pipefishes?
+
+# Create summary table
+summary_table <- df %>%
+  filter(!is.na(inform_conservation_interest)) %>%  # Remove NA values
+  group_by(inform_conservation_interest) %>%
+  summarise(Frequency = n(), .groups = "drop") %>%
+  mutate(Percentage = round(100 * Frequency / sum(Frequency), 2)) %>%
+  arrange(desc(Frequency))  # Sort by most frequent response
+
+# Print the table
+print(summary_table)
