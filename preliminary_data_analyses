@@ -140,6 +140,122 @@ summary_table <- data.frame(
 # Print the table
 print(summary_table)
 
+
+####################################################################################################################################
+# Number of response and percentage reponse for question 10. In your opinion what are the main contributions of seahorses and pipefishes to human wellbeing?
+
+df_summary_corrected <- df %>%
+  select(starts_with("contribut_")) %>%
+  pivot_longer(cols = everything(), names_to = "Question", values_to = "Response") %>%
+  filter(!is.na(Response)) %>%
+  group_by(Question, Response) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  # Calculate the total count for each question (ignoring NA values)
+  group_by(Question) %>%
+  mutate(Total = sum(Count)) %>%
+  ungroup() %>%
+  # Calculate percentage as (Count / Total) * 100
+  mutate(Percentage = (Count / Total) * 100) %>%
+  select(-Total)  # Drop the 'Total' column after calculating percentages
+
+# Reshape the data to wide format
+df_summary_wide <- df_summary_corrected %>%
+  pivot_wider(names_from = Response, values_from = c(Count, Percentage), names_glue = "{Response}_{.value}")
+
+# Print the final table
+print(df_summary_wide)
+
+#visualisation with a box whisker plot
+
+#take away IDks
+df <- df %>%
+  mutate(across(starts_with("contribut_"), ~ case_when(
+    . == "No benefit" ~ 0,
+    . == "Slight benefit" ~ 1,
+    . == "Moderate beneficial" ~ 2,
+    . == "Very beneficial" ~ 3,
+    . == "Extremely beneficial" ~ 4,
+    . == "Don’t know/hard to say" ~ NA,
+    TRUE ~ as.numeric(.)
+  )))
+
+# Reshape your data into long format for plotting
+df_long <- df %>%
+  select(starts_with("contribut_")) %>%
+  pivot_longer(cols = everything(), names_to = "Question", values_to = "Response") %>%
+  filter(!is.na(Response))  # Remove NAs
+
+# Create the boxplot
+ggplot(df_long, aes(x = Question, y = Response)) +
+  geom_boxplot() +
+  scale_y_continuous(breaks = 0:4) +  # Set y-axis scale from 0 to 4
+  theme_minimal() +
+  labs(title = "Distribution of Responses for Each Contribution Question", 
+       x = "Contribution Questions", 
+       y = "Response (0 to 4)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Tilt x-axis labels for readability
+
+#visulation with Diverging bars with neutrals separate: tentative (not great but best til now)
+
+df_long <- df_long %>%
+  mutate(
+    Response_Type = case_when(
+      Response == 0 ~ "Very Negative",   # 0 = No benefit
+      Response == 1 ~ "Negative",        # 1 = Slight benefit
+      Response == 2 ~ "Neutral",         # 2 = Moderate beneficial
+      Response == 3 ~ "Positive",        # 3 = Very beneficial
+      Response == 4 ~ "Very Positive",   # 4 = Extremely beneficial
+      is.na(Response) ~ "NA/Don't Know", # Handle NA or Don't Know
+      TRUE ~ "Other"                     # In case there are any outliers
+    )
+  )
+
+# Recalculate percentages and adjust for positioning on the graph
+df_summary <- df_long %>%
+  group_by(Question, Response_Type) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  group_by(Question) %>%
+  mutate(Percentage = (Count / sum(Count)) * 100) %>%
+  ungroup() %>%
+  mutate(
+    Adjusted_Percentage = case_when(
+      Response_Type == "Very Negative" ~ -Percentage,  # Negative responses
+      Response_Type == "Negative" ~ -Percentage,       # Negative responses
+      Response_Type == "Neutral" ~ 0.1,                # Slightly right of center for neutral
+      Response_Type == "NA/Don't Know" ~ 0.15,         # Place NA/Don't Know on the far right
+      TRUE ~ Percentage  # Positive responses
+    )
+  )
+
+# Create the diverging bar chart with NA/Don't Know included
+ggplot(df_summary, aes(x = Adjusted_Percentage, y = Question, fill = Response_Type)) +
+  geom_bar(stat = "identity", width = 0.7, position = "identity") +
+  scale_fill_manual(values = c(
+    "Very Negative" = "#800000",  # Darker red for Very Negative
+    "Negative" = "#d73027",      # Lighter red for Negative
+    "Neutral" = "#f7f7f7",       # Neutral in gray
+    "Positive" = "#1a9850",      # Green for Positive
+    "Very Positive" = "#006837", # Dark green for Very Positive
+    "NA/Don't Know" = "#A9A9A9"  # Gray for Don't Know/NA
+  )) +
+  labs(
+    title = "Distribution of Responses for Contribution Questions",
+    x = "Percentage of Responses",
+    y = "Contribution Questions",
+    fill = "Response Type"
+  ) +
+  theme_minimal(base_size = 15) +
+  theme(
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12),
+    plot.title = element_text(size = 18, face = "bold", hjust = 0.5),
+    plot.caption = element_text(size = 12, color = "gray60", hjust = 1),
+    legend.position = "top"
+  ) +
+  geom_vline(xintercept = 0, color = "black", size = 1)  # Vertical line at 0 (neutral)
+
+
+
 ####################################################################################################################################
 # Number of response and percentage reponse for question 12. How often do you consume information about seahorses and pipefishes? Please tick one option.
 
