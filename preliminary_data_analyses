@@ -195,65 +195,30 @@ ggplot(df_long, aes(x = Question, y = Response)) +
        y = "Response (0 to 4)") +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Tilt x-axis labels for readability
 
-#visulation with Diverging bars with neutrals separate: tentative (not great but best til now)
+####################################################################################################################################
+# Number of response and percentage reponse for question 11. Please rate the following statements. Seahorses and pipefishes can...
 
-df_long <- df_long %>%
-  mutate(
-    Response_Type = case_when(
-      Response == 0 ~ "Very Negative",   # 0 = No benefit
-      Response == 1 ~ "Negative",        # 1 = Slight benefit
-      Response == 2 ~ "Neutral",         # 2 = Moderate beneficial
-      Response == 3 ~ "Positive",        # 3 = Very beneficial
-      Response == 4 ~ "Very Positive",   # 4 = Extremely beneficial
-      is.na(Response) ~ "NA/Don't Know", # Handle NA or Don't Know
-      TRUE ~ "Other"                     # In case there are any outliers
-    )
-  )
 
-# Recalculate percentages and adjust for positioning on the graph
-df_summary <- df_long %>%
-  group_by(Question, Response_Type) %>%
+df_summary_corrected <- df %>%
+  select(starts_with("statement_")) %>%
+  pivot_longer(cols = everything(), names_to = "Question", values_to = "Response") %>%
+  filter(!is.na(Response)) %>%
+  group_by(Question, Response) %>%
   summarise(Count = n(), .groups = "drop") %>%
+  # Calculate the total count for each question (ignoring NA values)
   group_by(Question) %>%
-  mutate(Percentage = (Count / sum(Count)) * 100) %>%
+  mutate(Total = sum(Count)) %>%
   ungroup() %>%
-  mutate(
-    Adjusted_Percentage = case_when(
-      Response_Type == "Very Negative" ~ -Percentage,  # Negative responses
-      Response_Type == "Negative" ~ -Percentage,       # Negative responses
-      Response_Type == "Neutral" ~ 0.1,                # Slightly right of center for neutral
-      Response_Type == "NA/Don't Know" ~ 0.15,         # Place NA/Don't Know on the far right
-      TRUE ~ Percentage  # Positive responses
-    )
-  )
+  # Calculate percentage as (Count / Total) * 100
+  mutate(Percentage = (Count / Total) * 100) %>%
+  select(-Total)  # Drop the 'Total' column after calculating percentages
 
-# Create the diverging bar chart with NA/Don't Know included
-ggplot(df_summary, aes(x = Adjusted_Percentage, y = Question, fill = Response_Type)) +
-  geom_bar(stat = "identity", width = 0.7, position = "identity") +
-  scale_fill_manual(values = c(
-    "Very Negative" = "#800000",  # Darker red for Very Negative
-    "Negative" = "#d73027",      # Lighter red for Negative
-    "Neutral" = "#f7f7f7",       # Neutral in gray
-    "Positive" = "#1a9850",      # Green for Positive
-    "Very Positive" = "#006837", # Dark green for Very Positive
-    "NA/Don't Know" = "#A9A9A9"  # Gray for Don't Know/NA
-  )) +
-  labs(
-    title = "Distribution of Responses for Contribution Questions",
-    x = "Percentage of Responses",
-    y = "Contribution Questions",
-    fill = "Response Type"
-  ) +
-  theme_minimal(base_size = 15) +
-  theme(
-    axis.text.x = element_text(size = 12),
-    axis.text.y = element_text(size = 12),
-    plot.title = element_text(size = 18, face = "bold", hjust = 0.5),
-    plot.caption = element_text(size = 12, color = "gray60", hjust = 1),
-    legend.position = "top"
-  ) +
-  geom_vline(xintercept = 0, color = "black", size = 1)  # Vertical line at 0 (neutral)
+# Reshape the data to wide format
+df_summary_wide <- df_summary_corrected %>%
+  pivot_wider(names_from = Response, values_from = c(Count, Percentage), names_glue = "{Response}_{.value}")
 
+# Print the final table
+print(df_summary_wide)
 
 
 ####################################################################################################################################
@@ -336,6 +301,20 @@ sum(!is.na(df$communication_audience))
 print(value_count)
 
 ####################################################################################################################################
+# Number of response and percentage reponse for question 17. Is the conservation of seahorses/pipefishes important to you? Please tick one option.
+
+# Create summary table
+summary_table <- df %>%
+  filter(!is.na(conservation_importance)) %>%  # Remove NA values
+  group_by(conservation_importance) %>%
+  summarise(Frequency = n(), .groups = "drop") %>%
+  mutate(Percentage = round(100 * Frequency / sum(Frequency), 2)) %>%
+  arrange(desc(Frequency))  # Sort by most frequent response
+
+# Print the table
+print(summary_table)
+
+####################################################################################################################################
 # Number of response and percentage reponse for question 18. Would you be willing to engage in conservation initiatives to protect seahorses and pipefishes? 
 
 # Create summary table
@@ -349,3 +328,47 @@ summary_table <- df %>%
 # Print the table
 print(summary_table)
 
+####################################################################################################################################
+# Number of response and percentage reponse for question 19. Please consider the potential ways of public engagement in seahorse conservation and rate the likelihood of you participating in each one of them?
+
+df_summary_corrected <- df %>%
+  select(starts_with("particip_")) %>%
+  pivot_longer(cols = everything(), names_to = "Question", values_to = "Response") %>%
+  filter(!is.na(Response)) %>%
+  group_by(Question, Response) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  # Calculate the total count for each question (ignoring NA values)
+  group_by(Question) %>%
+  mutate(Total = sum(Count)) %>%
+  ungroup() %>%
+  # Calculate percentage as (Count / Total) * 100
+  mutate(Percentage = (Count / Total) * 100) %>%
+  select(-Total)  # Drop the 'Total' column after calculating percentages
+
+# Reshape the data to wide format
+df_summary_wide <- df_summary_corrected %>%
+  pivot_wider(names_from = Response, values_from = c(Count, Percentage), names_glue = "{Response}_{.value}")
+
+# Print the final table
+print(df_summary_wide)
+
+####################################################################################################################################
+# Number of response and percentage reponse for question 20. In your opinion, what is the superpower of seahorses/pipefishes? Tick only one option.
+
+summary_table_final <- df %>%
+  filter(!is.na(superpower)) %>%  
+  separate_rows(superpower, sep = ",\\s*") %>%
+  mutate(superpower = case_when(
+    superpower %in% c("Male pregnancy", "Gravidanza maschile") ~ "Male pregnancy",
+    superpower %in% c("Beauty", "Bellezza") ~ "Beauty",
+    superpower %in% c("All", "ALL", "All of the above", "All of them", "all of the above", "Todas", "Unicita") ~ "All",
+    superpower %in% c("Don't know", "NAO SEI") ~ NA_character_,  # Remove unwanted responses
+    superpower %in% c("Male pregnancy", "Uniqueness", "Beauty", 
+                      "Camouflage", "Immobility", "All", "Voracity") ~ superpower,
+    TRUE ~ "Other"  # Everything else goes into "Other"
+  )) %>%
+  filter(!is.na(superpower)) %>%
+  group_by(superpower) %>%
+  summarise(Frequency = n(), .groups = "drop") %>%
+  mutate(Percentage = round(100 * Frequency / sum(Frequency), 2)) %>%
+  arrange(desc(Frequency)) 
