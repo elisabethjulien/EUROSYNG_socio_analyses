@@ -82,6 +82,28 @@ df %>%
  #Most respondents (55%) believe they do not have any knowledge about syngnathids, 37% think they have basic knowledge, 6.7% believe they are knowledgeable, and less than 1% of respondents consider themselves to be experts on the topic. 
 
 ####################################################################################################################################
+basictrueorfalse_
+# Number of response and percentage reponse for question 3. Please rate the following statements as “True” or “False”. Please tick one option.
+
+df_summary_corrected <- df %>%
+  select(starts_with("basictrueorfalse_")) %>%
+  pivot_longer(cols = everything(), names_to = "Question", values_to = "Response") %>%
+  filter(!is.na(Response)) %>%
+  group_by(Question, Response) %>%
+  summarise(Count = n(), .groups = "drop") %>%
+  # Calculate the total count for each question (ignoring NA values)
+  group_by(Question) %>%
+  mutate(Total = sum(Count)) %>%
+  ungroup() %>%
+  # Calculate percentage as (Count / Total) * 100
+  mutate(Percentage = (Count / Total) * 100) %>%
+  select(-Total)  # Drop the 'Total' column after calculating percentages
+
+# Reshape the data to wide format
+df_summary_wide <- df_summary_corrected %>%
+  pivot_wider(names_from = Response, values_from = c(Count, Percentage), names_glue = "{Response}_{.value}")
+
+####################################################################################################################################
 # Number of response and percentage reponse for question 4. Please rate the following statements as “True” or “False”. Please tick one option.
 
 truefalse_columns <- c("trueorfalse_a", "trueorfalse_b", "trueorfalse_c", "trueorfalse_d", 
@@ -140,6 +162,41 @@ summary_table <- data.frame(
 # Print the table
 print(summary_table)
 
+####################################################################################################################################
+# Number of response and percentage reponse for question 7. Do you or any member of your household work in an industry associated with the sea (e.g., fishing, seafood restaurants/coffee shops, research, shipping, tourism, etc.)?
+
+summary_table <- df %>%
+  filter(!is.na(work_grouped)) %>%  # Remove NA values
+  group_by(work_grouped) %>%
+  summarise(Frequency = n(), .groups = "drop") %>%
+  mutate(Percentage = round(100 * Frequency / sum(Frequency), 2)) %>%
+  arrange(desc(Frequency))  # Sort by most frequent response
+
+# Print the table
+print(summary_table)
+
+####################################################################################################################################
+# Number of response and percentage reponse for question 8. Do you have any ocean-related hobbies?
+
+summary_table <- df %>%
+  filter(!is.na(hobbies_grouped)) %>%  # Remove NA values
+  group_by(hobbies_grouped) %>%
+  summarise(Frequency = n(), .groups = "drop") %>%
+  mutate(Percentage = round(100 * Frequency / sum(Frequency), 2)) %>%
+  arrange(desc(Frequency))  # Sort by most frequent response
+
+####################################################################################################################################
+# Number of response and percentage reponse for question 9. Are you a member of an environmental and/or ocean related NGO? Please tick one option.
+
+summary_table <- df %>%
+  filter(!is.na(memberngo)) %>%  # Remove NA values
+  group_by(memberngo) %>%
+  summarise(Frequency = n(), .groups = "drop") %>%
+  mutate(Percentage = round(100 * Frequency / sum(Frequency), 2)) %>%
+  arrange(desc(Frequency))  # Sort by most frequent response
+
+# Print the table
+print(summary_table)
 
 ####################################################################################################################################
 # Number of response and percentage reponse for question 10. In your opinion what are the main contributions of seahorses and pipefishes to human wellbeing?
