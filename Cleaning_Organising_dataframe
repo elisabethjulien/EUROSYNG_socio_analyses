@@ -400,8 +400,6 @@ replacements <- c(
   "(?i)Newspapers|Press|generalist mass media|social media|Social media|Press|Newspapers" = "Press and media"  # Removed extra ")"
 )
 
-split_answers <- gsub("Industries \\(polluteurs\\)", "Polluting industries", split_answers)
-
 df <- df %>%
   mutate(communication_audience = case_when(
     communication_audience %in% c("Industries (polluteurs)") ~ "Polluting industries", 
