@@ -9,7 +9,7 @@ library(tidyverse)
 library(tidyr)
 ####################################################################################################################################
 #Importing the dataframe
-final_publicperception <- read_csv("C:/Users/elili/Downloads/Final_PublicPerception_Survey.csv")
+final_publicperception <- read_csv("Final_PublicPerception_Survey.csv")
 final_publicperception$Timestamp=NULL
 final_publicperception$Date=NULL
 df<-final_publicperception
