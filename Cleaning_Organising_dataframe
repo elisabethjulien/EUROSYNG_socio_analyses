@@ -1,7 +1,8 @@
-##############################
+  ##############################
 #   Dataframe organisation   #
 #     for easier analyses    #
 ##############################
+install.packages("tidyverse")
 library(readr)
 library(dplyr)
 library(stringr)
@@ -10,9 +11,9 @@ library(tidyr)
 ####################################################################################################################################
 #Importing the dataframe
 final_publicperception <- read_csv("Final_PublicPerception_Survey.csv")
-final_publicperception$Timestamp=NULL
-final_publicperception$Date=NULL
-df<-final_publicperception
+X01_Public_perception_GoogleForm_Responses_Form_responses_1$Timestamp=NULL
+X01_Public_perception_GoogleForm_Responses_Form_responses_1$Date=NULL
+df<-X01_Public_perception_GoogleForm_Responses_Form_responses_1
 str(df)
 
 #PP_Bari <- df[grepl("PU_RI", df$N_number), ]
@@ -115,9 +116,9 @@ df <- df %>%
     TRUE ~ "italy"                                        # All others default to "italy"
   ))
 
-#unique_answers <- df %>%
-#  count(location)
-#print(unique_answers)
+unique_answers <- df %>%
+  count(location)
+print(unique_answers)
 
 ####################################################################################################################################
 #1. Have you heard about Syngnathids previously?
@@ -210,8 +211,8 @@ df <- df %>%
     str_detect(work_ocean, regex("whale- tour guide|Seafood reastaurant|Biologia marinha/turismo|TURISMO SURF|restaurant|café|tourism|aquarium|diving|cetacean|maritime |restauration|tourism (cruise ship)|seafood restaurant|Fishing store|Peter's Café|Diving Center", ignore_case = TRUE)) ~ "Yes; Tourism & Hospitality",
     str_detect(work_ocean, regex("pesca|aquaculture|aquacultura|pesca e aquacultura|Fishing (Lota)|fish|fishmongers|fishing|fisheries|lota", ignore_case = TRUE)) ~ "Yes; Fishing & Fisheries",
     str_detect(work_ocean, regex("research|investigação|marine biology|conservation", ignore_case = TRUE)) ~ "Yes; Research & Conservation",
-    str_detect(work_ocean, regex("sailing|nautical services|sailer|navegation|sales marine equipment|navigation|sailor|yachting|trade|port|fuel|life guard|shipping", ignore_case = TRUE)) ~ "Yes; Navigation & Maritime Transport",
-    str_detect(work_ocean, regex("university|education|academics", ignore_case = TRUE)) ~ "Yes; Education & Institutions",
+    str_detect(work_ocean, regex("sailing|nautical services|sailer|navegation|sales marine equipment|navigation|sailor|yachting|trade|port|fuel|life guard|shipping|Nautical mechanic|nautic mechanic", ignore_case = TRUE)) ~ "Yes; Navigation & Maritime Transport",
+    str_detect(work_ocean, regex("university|education|academics|Investigation", ignore_case = TRUE)) ~ "Yes; Education & Institutions",
     str_detect(work_ocean, regex("food processing|aquarofilia|DEPURADOR|policy|merchant navy|(military)|janitor", ignore_case = TRUE)) ~ "Yes; Other",
     str_detect(work_ocean, regex("no|nno", ignore_case = TRUE)) ~ "No",
     TRUE ~ work_ocean
@@ -380,8 +381,8 @@ unique_answers <- df %>%
 print(unique_answers)
 
 df$inform_conservation_interest <- ifelse(df$inform_conservation_interest== "No", 0, 
-                                  ifelse(df$inform_conservation_interest== "Yes", 1, 
-                                  ifelse(df$inform_conservation_interest== "I don't know/ hard to say", 2, NA)))
+                                          ifelse(df$inform_conservation_interest== "Yes", 1, 
+                                                 ifelse(df$inform_conservation_interest== "I don't know/ hard to say", 2, NA)))
 
 ####################################################################################################################################
 # 16. In your opinion, to which audiences should communication efforts be directed to have an effective impact on the conservation of seahorses and pipefishes? 
@@ -431,18 +432,16 @@ print(frequency_count)
 # Number of response and percentage reponse for question 18. Would you be willing to engage in conservation initiatives to protect seahorses and pipefishes? 
 
 # Create summary table
-summary_table <- df %>%
 #18. Would you be willing to engage in conservation initiatives to protect seahorses and pipefishes? 
-  
 unique_answers <- df %>%
-distinct(will_to_engage) %>%
-pull(will_to_engage)
+  distinct(will_to_engage) %>%
+  pull(will_to_engage)
 
 print(unique_answers)
 
 df$will_to_engage <- ifelse(df$will_to_engage== "No", 0, 
-                    ifelse(df$will_to_engage== "Yes",1,
-                    ifelse(df$will_to_engage== "I don't know/ hard to say",2, NA)))
+                            ifelse(df$will_to_engage== "Yes",1,
+                                   ifelse(df$will_to_engage== "I don't know/ hard to say",2, NA)))
 
 ####################################################################################################################################
 #19. Please consider the potential ways of public engagement in seahorse conservation and rate the likelihood of you participating in each one of them?
@@ -504,8 +503,8 @@ df$age <- factor(df$age,
 #23. Gender. Tick only one.
 
 df$gender <- ifelse(df$gender == "Male", 0, 
-            ifelse(df$gender == "Female", 1, 
-           ifelse(df$gender == "Other", "2", df$gender)))
+                    ifelse(df$gender == "Female", 1, 
+                           ifelse(df$gender == "Other", "2", df$gender)))
 
 ####################################################################################################################################
 #24. Do you live near the coast or inland? Tick only one.
@@ -529,8 +528,8 @@ unique_answers <- df %>%
 print(unique_answers)
 
 df$mpa_prox <- ifelse(df$mpa_prox == "No", 0, 
-              ifelse(df$mpa_prox == "Yes", 1, 
-              ifelse(df$mpa_prox == "I don't know/ hard to say", 2, NA)))
+                      ifelse(df$mpa_prox == "Yes", 1, 
+                             ifelse(df$mpa_prox == "I don't know/ hard to say", 2, NA)))
 
 
 ####################################################################################################################################
@@ -615,6 +614,7 @@ df <- df %>%
     nat== "spain" ~ "ESP",
     nat== "romanian" ~ "ROU",
     nat== "spanish (galicia)" ~ "ESP",
+    nat== "Snapish" ~ "ESP",
     nat== "bulgarian" ~ "BGR",
     nat== "greek" ~ "GRC",
     nat== "colombian" ~ "COL",
@@ -625,3 +625,10 @@ df <- df %>%
     
     TRUE ~ nat  # Keeps original value if no match is found
   ))
+
+
+unique_answers <- df %>%
+  distinct(nat) %>%
+  pull(nat)
+
+print(unique_answers)
