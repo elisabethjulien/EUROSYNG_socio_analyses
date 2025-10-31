@@ -1,3 +1,18 @@
+install.packages("rnaturalearth")
+install.packages("remotes")
+install.packages("ggplot2")
+install.packages("devtools")
+install.packages("tidyverse")
+install.packages("ggthemes")
+install.packages("ggalt")
+install.packages("ggrepel")   # for annotations
+install.packages("viridis")   # for nice colours
+install.packages("broom")
+install.packages("treemapify")  # for making area graphs
+install.packages("wesanderson")
+install.packages("sf")
+install.packages("ggspatial")
+library(ggspatial)
 library(rnaturalearth)
 library(remotes)
 library(ggplot2)
@@ -10,33 +25,72 @@ library(viridis)  # for nice colours
 library(broom)
 library(treemapify)  # for making area graphs
 library(wesanderson)
-library(sf
+library(sf)
+library(ggrepel)
+library(ggspatial)
+library(maps)
+library(dplyr)
 
-#select territories of interest (where surveys were conducted + to fill awkward blanks)
-europe <- map_data("world", region = c("Portugal","Canary Islands", "Spain", "Azores", "Italy", "France", "Switzerland"))
 
-#make a simple dataframe with coordinates of locations of surveying, with number of surveys conducted per place
+
+# Get map data for selected European countries
+europe <- map_data("world", region = c("Portugal", "Spain", "Italy", "France", "Belgium", "Sweden", "UK", "Ireland", "Germany", "Denmark","Germany", "Netherlands", "Switzerland", "Norway", "Finland", "Austria", "Poland", "Croatia", "Poland", "Czech Republic", "Slovakia", "Slovenia", "Hungary", "Bosnia and Herzegovina", "Ukraine", "Lituania", "Romania", "Belarus", "Albania", "Montenegro", "Greece", "Algeria", "Morocco", "Tunisia"))
+
+# Set fill colors: France default grey, others #e1eaf6
+europe <- europe %>%
+  mutate(fill_color = ifelse(region %in% c("France", "UK", "Ireland", "Germany", "Denmark", "Netherlands","Switzerland", "Norway", "Finland", "Austria", "Poland", "Croatia","Poland", "Croatia", "Poland", "Czech Republic", "Slovakia", "Slovenia", "Hungary", "Bosnia and Herzegovina", "Ukraine", "Lituania", "Romania",  "Belarus", "Albania", "Montenegro", "Greece", "Algeria", "Morocco", "Tunisia"),
+                             "#f2f3f5",  # light grey for these countries
+                             "#becbe0")) # light blue-grey for others
+
+# Simple dataframe with survey locations
 lter <- data.frame(
-  place = c("Azores, n=295","Portugal, n=30","Galicia, n=60", "Sicily, n=29", "Canarias, n=9", "Bari, n=191"),
-  x = c(-28.244,-9, -8, 14.616, -15, 16.8),  # Replace with accurate longitudes if needed
-  y = c(38.722, 39,42.5, 38, 28, 41),   # Replace with accurate latitudes if needed
-  number = c(250,50, 100, 50, 50, 200)         # New column with specified numbers
+  place = c("Portugal, n=435", "Spain, n=111", "Italy, n=294", "Belgium, n=110", "Sweden, n=39"),
+  x = c(-9, -2, 16, 6, 16),
+  y = c(39, 42.5, 42, 51, 59),
+  number = c(250, 100, 200, 100, 80)
 )
 
-#make a map
+# Create the map
 lter_map6 <- ggplot() +
-  geom_map(map = europe, data = europe, colour = "lightgrey",size=0.1,
-           aes(long, lat, map_id = region),
-           ylim = c(25, 80), xlim = c(-175, -50))+
-  geom_point(data = lter,
-             aes(x = x, y = y, fill = number, size = number),  # Map 'size' to 'number' column
-             alpha = 0.8, colour = "white", shape = 21) +
-  scale_size(range = c(2, 15)) +  # Adjust size range based on 'number'
-  theme_minimal() +  # Use a minimal theme instead of theme_map()
+  # Country polygons
+  geom_polygon(
+    data = europe,
+    aes(x = long, y = lat, group = group, fill = fill_color),
+    color = "lightgrey", size = 0.1
+  ) +
+  scale_fill_identity() +
+  
+  # Circles for survey locations (same blue for all)
+  geom_point(
+    data = lter,
+    aes(x = x, y = y, size = number),
+    fill = "#575699C6",   # your chosen blue
+    alpha = 0.9,
+    colour = "white",
+    shape = 21
+  ) +
+  
+  # Labels
+  geom_label_repel(
+    data = lter,
+    aes(x = x, y = y, label = place),
+    box.padding = 1, size = 4, nudge_x = 1, nudge_y = 1
+  ) +
+  
+  scale_size(range = c(2, 15)) +
+  theme_minimal() +
+  coord_quickmap(xlim = c(-12.5, 20), ylim = c(35, 70)) +
   theme(legend.position = "bottom") +
-  # Adding point annotations with the site name
-  geom_label_repel(data = lter,
-                   aes(x = x, y = y, label = place),
-                   # Setting the positions of the labels
-                   box.padding = 1, size = 4, nudge_x = 1, nudge_y = 1)
-plot(lter_map6)
+  
+  # North arrow and scale bar
+  annotation_north_arrow(
+    location = "tl",
+    which_north = "true",
+    pad_x = unit(0.2, "in"),
+    pad_y = unit(0.2, "in"),
+    style = north_arrow_fancy_orienteering
+  )
+
+# Display the map
+print(lter_map6)
+
