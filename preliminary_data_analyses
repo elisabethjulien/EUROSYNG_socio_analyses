@@ -1,431 +1,187 @@
-######################
-#   Data Overview    #
-#                    #
-######################
+# ======================================================================
+# Setup: Load required libraries
+# ======================================================================
 library(dplyr)
 library(tidyr)
-library(writexl)
-
-####################################################################################################################################
-
-#Overview of sociodemographic profiles of respondents:
-# by counting occurrence of each unique value per column of interest, then calculating it as a percentage
-
-#Summary percentage of gender
-value_counts <- table(por_df$gender)
-percentages_gender <- prop.table(value_counts) * 100
-print(percentages_gender)
-
-#Summary percentage of age
-value_counts <- table(por_df$age)
-percentages_age <- prop.table(value_counts) * 100
-print(percentages_age)
-
-#Summary percentage of education
-value_counts <- table(por_df$edu)
-percentages_education <- prop.table(value_counts) * 100
-print(percentages_education)
-
-#Summary percentage of respondents' residence's proximity to coast 
-value_counts <- table(por_df$coast)
-percentages_coast <- prop.table(value_counts) * 100
-print(percentages_coast)
-
-#Summary percentage of employment type
-value_counts <- table(por_df$job)
-percentages_job <- prop.table(value_counts) * 100
-print(percentages_job)
-
-#Summary percentage of respondents' residence's proximity to a marine proteted area
-value_counts <- table(por_df$mpa_prox)
-print(value_counts)
-percentages_mpa <- prop.table(value_counts) * 100
-print(percentages_mpa)
-
-####################################################################################################################################
-
-# Number of response and percentage reponse for question 1. Have you heard about Syngnathids previously?
-
-df %>%
-  filter(!is.na(syngnathid_prev)) %>%  # Remove NA values
-  group_by(syngnathid_prev) %>%
-  summarise(Count = n()) %>%
-  mutate(Percentage = (Count / sum(Count)) * 100) %>%
-  arrange(desc(Percentage))  # Sort from highest to lowest
-
-# A tibble: 3 × 3
-#  syngnathid_prev Count Percentage
-#            <dbl> <int>      <dbl>
-#1               0   546      58.1 
-#2               1   357      38.0 
-#3               2    37       3.94
-
-####################################################################################################################################
-
-# Number of response and percentage reponse for question 2. Please rate your knowledge about Syngnathids. 
-
-df %>%
-  filter(!is.na(perceived_knowledge)) %>%  # Remove NA values
-  group_by(perceived_knowledge) %>%
-  summarise(Count = n()) %>%
-  mutate(Percentage = (Count / sum(Count)) * 100) %>%
-  arrange(desc(Percentage))  # Sort from highest to lowest
-
-  # A tibble: 4 × 3
-  #perceived_knowledge Count Percentage
-  #<ord>               <int>      <dbl>
-#1 No knowledge          504     55.0  
-#2 Basic knowledge       345     37.7  
-#3 Knowledgeable          61      6.66 
-#4 Expert knowledge        6      0.655
-
- #Most respondents (55%) believe they do not have any knowledge about syngnathids, 37% think they have basic knowledge, 6.7% believe they are knowledgeable, and less than 1% of respondents consider themselves to be experts on the topic. 
-
-####################################################################################################################################
-basictrueorfalse_
-# Number of response and percentage reponse for question 3. Please rate the following statements as “True” or “False”. Please tick one option.
-
-df_summary_corrected <- df %>%
-  select(starts_with("basictrueorfalse_")) %>%
-  pivot_longer(cols = everything(), names_to = "Question", values_to = "Response") %>%
-  filter(!is.na(Response)) %>%
-  group_by(Question, Response) %>%
-  summarise(Count = n(), .groups = "drop") %>%
-  # Calculate the total count for each question (ignoring NA values)
-  group_by(Question) %>%
-  mutate(Total = sum(Count)) %>%
-  ungroup() %>%
-  # Calculate percentage as (Count / Total) * 100
-  mutate(Percentage = (Count / Total) * 100) %>%
-  select(-Total)  # Drop the 'Total' column after calculating percentages
-
-# Reshape the data to wide format
-df_summary_wide <- df_summary_corrected %>%
-  pivot_wider(names_from = Response, values_from = c(Count, Percentage), names_glue = "{Response}_{.value}")
-
-####################################################################################################################################
-# Number of response and percentage reponse for question 4. Please rate the following statements as “True” or “False”. Please tick one option.
-
-truefalse_columns <- c("trueorfalse_a", "trueorfalse_b", "trueorfalse_c", "trueorfalse_d", 
-                      "trueorfalse_e", "trueorfalse_f", "trueorfalse_g", "trueorfalse_h", 
-                      "trueorfalse_i", "trueorfalse_j", "trueorfalse_k")
-
-# Reshape data into long format and remove NA values
-df_long <- df %>%
-  select(all_of(truefalse_columns)) %>%
-  pivot_longer(cols = everything(), names_to = "question", values_to = "response") %>%
-  filter(!is.na(response))  # Exclude NA values
-
-# Count occurrences of each response per question
-summary_table <- df_long %>%
-  group_by(question, response) %>%
-  summarise(count = n(), .groups = "drop") %>%
-  group_by(question) %>%
-  mutate(percentage = round(100 * count / sum(count), 2)) %>%
-  pivot_wider(names_from = response, values_from = c(count, percentage), values_fill = 0)
-
-# Print the summary table
-print(summary_table)
-
-####################################################################################################################################
-# Number of response and percentage reponse for question 5. In general, how threatened do you think seahorses and pipefishes are by human activities and/or environmental impacts? 
-
-# Count occurrences and calculate percentages
-summary_table <- df %>%
-  filter(!is.na(threatened)) %>%  # Remove NA values
-  group_by(threatened) %>%
-  summarise(count = n(), .groups = "drop") %>%
-  mutate(percentage = round(100 * count / sum(count), 2)) %>%
-  arrange(desc(count))  # Sort by count in descending order
-
-# Print the table
-print(summary_table)
-
-####################################################################################################################################
-# Number of response and percentage reponse for question 6. If you considered seahorses and pipefishes as species somehow threatened, please rank the following threats where 1=threat ranked most harmful to 7=threat ranked least harmful (scale from 1 to 7, no repeats).
-
-
-# Define columns to check
-rankthreat_columns <- c("rankthreat_a", "rankthreat_b", "rankthreat_c", "rankthreat_d", 
-                        "rankthreat_e", "rankthreat_f", "rankthreat_g")
-
-# Create summary table
-summary_table <- data.frame(
-  Column = rankthreat_columns,
-  Sum = sapply(rankthreat_columns, function(col) sum(df[[col]], na.rm = TRUE)),
-  Count_Non_NA = sapply(rankthreat_columns, function(col) sum(!is.na(df[[col]]))), # Count of non-NA responses
-  Sum_Per_Total = sapply(rankthreat_columns, function(col) 
-    sum(df[[col]], na.rm = TRUE) / sum(!is.na(df[[col]]))
-  )
-)
-
-# Print the table
-print(summary_table)
-
-####################################################################################################################################
-# Number of response and percentage reponse for question 7. Do you or any member of your household work in an industry associated with the sea (e.g., fishing, seafood restaurants/coffee shops, research, shipping, tourism, etc.)?
-
-summary_table <- df %>%
-  filter(!is.na(work_grouped)) %>%  # Remove NA values
-  group_by(work_grouped) %>%
-  summarise(Frequency = n(), .groups = "drop") %>%
-  mutate(Percentage = round(100 * Frequency / sum(Frequency), 2)) %>%
-  arrange(desc(Frequency))  # Sort by most frequent response
-
-# Print the table
-print(summary_table)
-
-####################################################################################################################################
-# Number of response and percentage reponse for question 8. Do you have any ocean-related hobbies?
-
-summary_table <- df %>%
-  filter(!is.na(hobbies_grouped)) %>%  # Remove NA values
-  group_by(hobbies_grouped) %>%
-  summarise(Frequency = n(), .groups = "drop") %>%
-  mutate(Percentage = round(100 * Frequency / sum(Frequency), 2)) %>%
-  arrange(desc(Frequency))  # Sort by most frequent response
-
-####################################################################################################################################
-# Number of response and percentage reponse for question 9. Are you a member of an environmental and/or ocean related NGO? Please tick one option.
-
-summary_table <- df %>%
-  filter(!is.na(memberngo)) %>%  # Remove NA values
-  group_by(memberngo) %>%
-  summarise(Frequency = n(), .groups = "drop") %>%
-  mutate(Percentage = round(100 * Frequency / sum(Frequency), 2)) %>%
-  arrange(desc(Frequency))  # Sort by most frequent response
-
-# Print the table
-print(summary_table)
-
-####################################################################################################################################
-# Number of response and percentage reponse for question 10. In your opinion what are the main contributions of seahorses and pipefishes to human wellbeing?
-
-df_summary_corrected <- df %>%
-  select(starts_with("contribut_")) %>%
-  pivot_longer(cols = everything(), names_to = "Question", values_to = "Response") %>%
-  filter(!is.na(Response)) %>%
-  group_by(Question, Response) %>%
-  summarise(Count = n(), .groups = "drop") %>%
-  # Calculate the total count for each question (ignoring NA values)
-  group_by(Question) %>%
-  mutate(Total = sum(Count)) %>%
-  ungroup() %>%
-  # Calculate percentage as (Count / Total) * 100
-  mutate(Percentage = (Count / Total) * 100) %>%
-  select(-Total)  # Drop the 'Total' column after calculating percentages
-
-# Reshape the data to wide format
-df_summary_wide <- df_summary_corrected %>%
-  pivot_wider(names_from = Response, values_from = c(Count, Percentage), names_glue = "{Response}_{.value}")
-
-# Print the final table
-print(df_summary_wide)
-
-#visualisation with a box whisker plot
-
-#take away IDks
-df <- df %>%
-  mutate(across(starts_with("contribut_"), ~ case_when(
-    . == "No benefit" ~ 0,
-    . == "Slight benefit" ~ 1,
-    . == "Moderate beneficial" ~ 2,
-    . == "Very beneficial" ~ 3,
-    . == "Extremely beneficial" ~ 4,
-    . == "Don’t know/hard to say" ~ NA,
-    TRUE ~ as.numeric(.)
-  )))
-
-# Reshape your data into long format for plotting
-df_long <- df %>%
-  select(starts_with("contribut_")) %>%
-  pivot_longer(cols = everything(), names_to = "Question", values_to = "Response") %>%
-  filter(!is.na(Response))  # Remove NAs
-
-# Create the boxplot
-ggplot(df_long, aes(x = Question, y = Response)) +
-  geom_boxplot() +
-  scale_y_continuous(breaks = 0:4) +  # Set y-axis scale from 0 to 4
-  theme_minimal() +
-  labs(title = "Distribution of Responses for Each Contribution Question", 
-       x = "Contribution Questions", 
-       y = "Response (0 to 4)") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Tilt x-axis labels for readability
-
-####################################################################################################################################
-# Number of response and percentage reponse for question 11. Please rate the following statements. Seahorses and pipefishes can...
-
-
-df_summary_corrected <- df %>%
-  select(starts_with("statement_")) %>%
-  pivot_longer(cols = everything(), names_to = "Question", values_to = "Response") %>%
-  filter(!is.na(Response)) %>%
-  group_by(Question, Response) %>%
-  summarise(Count = n(), .groups = "drop") %>%
-  # Calculate the total count for each question (ignoring NA values)
-  group_by(Question) %>%
-  mutate(Total = sum(Count)) %>%
-  ungroup() %>%
-  # Calculate percentage as (Count / Total) * 100
-  mutate(Percentage = (Count / Total) * 100) %>%
-  select(-Total)  # Drop the 'Total' column after calculating percentages
-
-# Reshape the data to wide format
-df_summary_wide <- df_summary_corrected %>%
-  pivot_wider(names_from = Response, values_from = c(Count, Percentage), names_glue = "{Response}_{.value}")
-
-# Print the final table
-print(df_summary_wide)
-
-
-####################################################################################################################################
-# Number of response and percentage reponse for question 12. How often do you consume information about seahorses and pipefishes? Please tick one option.
-
-# Create summary table
-summary_table <- df %>%
-  filter(!is.na(consump_freq)) %>%  # Remove NA values
-  group_by(consump_freq) %>%
-  summarise(Frequency = n(), .groups = "drop") %>%
-  mutate(Percentage = round(100 * Frequency / sum(Frequency), 2)) %>%
-  arrange(desc(Frequency))  # Sort by most frequent response
-
-# Print the table
-print(summary_table)
-
-####################################################################################################################################
-# Number of response and percentage reponse for question 13. What sources have most contributed to your current knowledge on seahorses and pipefishes? 
-
-# Count occurrences and calculate percentages
-value_count <- df %>%
-  mutate(info_sources_split = strsplit(info_sources, ", ")) %>%  # Split by comma and space
-  unnest(info_sources_split) %>%  # Unnest the list into individual rows
-  group_by(info_sources_split) %>%  # Group by the individual values
-  summarise(Count = n(), .groups = "drop") %>%  # Count occurrences
-  mutate(
-    Percentage = (Count / sum(!is.na(df$info_sources))) * 100  # Calculate percentage
-  ) %>%
-  arrange(desc(Count))  # Sort by count in descending order
-
-# Print the result
-print(value_count)
-
-####################################################################################################################################
-# Number of response and percentage reponse for question 14. In general, how interested would you be in news/information about seahorses and pipefishes? 
-
-# Create summary table
-summary_table <- df %>%
-  filter(!is.na(inform_interest)) %>%  # Remove NA values
-  group_by(inform_interest) %>%
-  summarise(Frequency = n(), .groups = "drop") %>%
-  mutate(Percentage = round(100 * Frequency / sum(Frequency), 2)) %>%
-  arrange(desc(Frequency))  # Sort by most frequent response
-
-# Print the table
-print(summary_table)
-
-####################################################################################################################################
-# Number of response and percentage reponse for question 15. Are you interested in more information on things you can do to help protect seahorses and pipefishes?
-
-# Create summary table
-summary_table <- df %>%
-  filter(!is.na(inform_conservation_interest)) %>%  # Remove NA values
-  group_by(inform_conservation_interest) %>%
-  summarise(Frequency = n(), .groups = "drop") %>%
-  mutate(Percentage = round(100 * Frequency / sum(Frequency), 2)) %>%
-  arrange(desc(Frequency))  # Sort by most frequent response
-
-# Print the table
-print(summary_table)
-
-####################################################################################################################################
-# Number of response and percentage reponse for question 16. In your opinion, to which audiences should communication efforts be directed to have an effective impact on the conservation of seahorses and pipefishes? 
-
-# Count occurrences and calculate percentages
-value_count <- df %>%
-  mutate(communication_audience_split = strsplit(communication_audience, ", ")) %>%  # Split by comma and space
-  unnest(communication_audience_split) %>%  # Unnest the list into individual rows
-  group_by(communication_audience_split) %>%  # Group by the individual values
-  summarise(Count = n(), .groups = "drop") %>%  # Count occurrences
-  mutate(
-    Percentage = (Count / sum(!is.na(df$communication_audience))) * 100  # Calculate percentage
-  ) %>%
-  arrange(desc(Count))  # Sort by count in descending order
-
-
-sum(!is.na(df$communication_audience))
-    
-# Print the result
-print(value_count)
-
-####################################################################################################################################
-# Number of response and percentage reponse for question 17. Is the conservation of seahorses/pipefishes important to you? Please tick one option.
-
-# Create summary table
-summary_table <- df %>%
-  filter(!is.na(conservation_importance)) %>%  # Remove NA values
-  group_by(conservation_importance) %>%
-  summarise(Frequency = n(), .groups = "drop") %>%
-  mutate(Percentage = round(100 * Frequency / sum(Frequency), 2)) %>%
-  arrange(desc(Frequency))  # Sort by most frequent response
-
-# Print the table
-print(summary_table)
-
-####################################################################################################################################
-# Number of response and percentage reponse for question 18. Would you be willing to engage in conservation initiatives to protect seahorses and pipefishes? 
-
-# Create summary table
-summary_table <- df %>%
-  filter(!is.na(will_to_engange)) %>%  # Remove NA values
-  group_by(will_to_engange) %>%
-  summarise(Frequency = n(), .groups = "drop") %>%
-  mutate(Percentage = round(100 * Frequency / sum(Frequency), 2)) %>%
-  arrange(desc(Frequency))  # Sort by most frequent response
-
-# Print the table
-print(summary_table)
-
-####################################################################################################################################
-# Number of response and percentage reponse for question 19. Please consider the potential ways of public engagement in seahorse conservation and rate the likelihood of you participating in each one of them?
-
-df_summary_corrected <- df %>%
-  select(starts_with("particip_")) %>%
-  pivot_longer(cols = everything(), names_to = "Question", values_to = "Response") %>%
-  filter(!is.na(Response)) %>%
-  group_by(Question, Response) %>%
-  summarise(Count = n(), .groups = "drop") %>%
-  # Calculate the total count for each question (ignoring NA values)
-  group_by(Question) %>%
-  mutate(Total = sum(Count)) %>%
-  ungroup() %>%
-  # Calculate percentage as (Count / Total) * 100
-  mutate(Percentage = (Count / Total) * 100) %>%
-  select(-Total)  # Drop the 'Total' column after calculating percentages
-
-# Reshape the data to wide format
-df_summary_wide <- df_summary_corrected %>%
-  pivot_wider(names_from = Response, values_from = c(Count, Percentage), names_glue = "{Response}_{.value}")
-
-# Print the final table
-print(df_summary_wide)
-
-####################################################################################################################################
-# Number of response and percentage reponse for question 20. In your opinion, what is the superpower of seahorses/pipefishes? Tick only one option.
-
+install.packages("openxlsx")
+library(openxlsx)
+
+# ======================================================================
+# Helper function: summarize categorical variables with NA count
+# ======================================================================
+summarise_with_NA <- function(data, column) {
+  total <- nrow(data)
+  na_count <- sum(is.na(data[[column]]))
+  col_sym <- sym(column)
+  
+  summary_tbl <- data %>%
+    filter(!is.na(!!col_sym)) %>%
+    group_by(!!col_sym) %>%
+    summarise(`No. of respondents` = n(), .groups = "drop") %>%
+    mutate(`% of respondents` = round(100 * `No. of respondents` / sum(`No. of respondents`), 2)) %>%
+    mutate(Response = as.character(!!col_sym)) %>%     # ✅ ensure consistent type
+    select(Response, `No. of respondents`, `% of respondents`) %>%
+    bind_rows(tibble(
+      Response = "NA responses",
+      `No. of respondents` = na_count,
+      `% of respondents` = round(100 * na_count / total, 2)
+    )) %>%
+    arrange(desc(Response == "NA responses"), desc(`No. of respondents`))
+  
+  return(summary_tbl)
+}
+
+
+# ======================================================================
+# Q1 – Heard about Syngnathids previously
+# ======================================================================
+addWorksheet(wb, "Q1_Heard_Syngnathids")
+df
+writeData(wb, "Q1_Heard_Syngnathids", summarise_with_NA(df, "syngnathid_prev"))
+
+# ======================================================================
+# Q2 – Self-rated knowledge about Syngnathids
+# ======================================================================
+addWorksheet(wb, "Q2_Knowledge_Level")
+writeData(wb, "Q2_Knowledge_Level", summarise_with_NA(df, "perceived_knowledge"))
+
+# ======================================================================
+# Q5 – Perceived threat level
+# ======================================================================
+addWorksheet(wb, "Q5_Threat_Level")
+writeData(wb, "Q5_Threat_Level", summarise_with_NA(df, "threatened"))
+
+# ======================================================================
+# Q7 – Employment related to the sea
+# ======================================================================
+addWorksheet(wb, "Q7_Sea_Employment")
+writeData(wb, "Q7_Sea_Employment", summarise_with_NA(df, "work_grouped"))
+
+# ======================================================================
+# 🐚 Q8 – Ocean-related hobbies
+# ======================================================================
+addWorksheet(wb, "Q8_Hobbies")
+writeData(wb, "Q8_Hobbies", summarise_with_NA(df, "hobbies_glm"))
+
+# ======================================================================
+# Q9 – Membership in an environmental NGO
+# ======================================================================
+addWorksheet(wb, "Q9_NGO_Membership")
+writeData(wb, "Q9_NGO_Membership", summarise_with_NA(df, "memberngo"))
+
+# ======================================================================
+# Q12 – Frequency of consuming information
+# ======================================================================
+addWorksheet(wb, "Q12_Info_Frequency")
+writeData(wb, "Q12_Info_Frequency", summarise_with_NA(df, "consump_freq"))
+
+# ======================================================================
+# Q14 – Interest in receiving information
+# ======================================================================
+addWorksheet(wb, "Q14_Info_Interest")
+writeData(wb, "Q14_Info_Interest", summarise_with_NA(df, "inform_interest"))
+
+# ======================================================================
+# Q15 – Interest in conservation information
+# ======================================================================
+addWorksheet(wb, "Q15_Conservation_Info")
+writeData(wb, "Q15_Conservation_Info", summarise_with_NA(df, "inform_conservation_interest"))
+
+# ======================================================================
+# Q17 – Importance of conservation
+# ======================================================================
+addWorksheet(wb, "Q17_Conservation_Importance")
+writeData(wb, "Q17_Conservation_Importance", summarise_with_NA(df, "conservation_importance"))
+
+# ======================================================================
+# Q18 – Willingness to engage
+# ======================================================================
+addWorksheet(wb, "Q18_Willingness")
+writeData(wb, "Q18_Willingness", summarise_with_NA(df, "will_to_engage"))
+
+# ======================================================================
+# Q20 – Perceived “superpower” of seahorses/pipefishes
+# ======================================================================
+na_count <- sum(is.na(df$superpower))
 summary_table_final <- df %>%
-  filter(!is.na(superpower)) %>%  
+  filter(!is.na(superpower)) %>%
   separate_rows(superpower, sep = ",\\s*") %>%
   mutate(superpower = case_when(
     superpower %in% c("Male pregnancy", "Gravidanza maschile") ~ "Male pregnancy",
     superpower %in% c("Beauty", "Bellezza") ~ "Beauty",
-    superpower %in% c("All", "ALL", "All of the above", "All of them", "all of the above", "Todas", "Unicita") ~ "All",
-    superpower %in% c("Don't know", "NAO SEI") ~ NA_character_,  # Remove unwanted responses
-    superpower %in% c("Male pregnancy", "Uniqueness", "Beauty", 
+    superpower %in% c("All", "ALL", "All of the above", "All of them",
+                      "all of the above", "Todas", "Unicita") ~ "All",
+    superpower %in% c("Don't know", "NAO SEI") ~ NA_character_,
+    superpower %in% c("Male pregnancy", "Uniqueness", "Beauty",
                       "Camouflage", "Immobility", "All", "Voracity") ~ superpower,
-    TRUE ~ "Other"  # Everything else goes into "Other"
+    TRUE ~ "Other"
   )) %>%
   filter(!is.na(superpower)) %>%
   group_by(superpower) %>%
-  summarise(Frequency = n(), .groups = "drop") %>%
-  mutate(Percentage = round(100 * Frequency / sum(Frequency), 2)) %>%
-  arrange(desc(Frequency)) 
+  summarise(`No. of respondents` = n(), .groups = "drop") %>%
+  mutate(`% of respondents` = round(100 * `No. of respondents` / sum(`No. of respondents`), 2)) %>%
+  arrange(desc(`No. of respondents`)) %>%
+  bind_rows(tibble(superpower = "NA responses",
+                   `No. of respondents` = na_count,
+                   `% of respondents` = (na_count / nrow(df)) * 100)) %>%
+  relocate(superpower, `No. of respondents`, `% of respondents`) %>%
+  rename(Response = superpower)
+
+addWorksheet(wb, "Q20_Superpower")
+writeData(wb, "Q20_Superpower", summary_table_final)
+
+# ======================================================================
+# Save Excel workbook
+# ======================================================================
+saveWorkbook(wb, "Syngnathid_Survey_Summaries.xlsx", overwrite = TRUE)
+
+cat("Export complete: 'Syngnathid_Survey_Summaries.xlsx' created successfully.\n")
+
+# ======================================================================
+# Sociodemographic summaries (Gender, Age, Education, Coast, Job, MPA proximity)
+# ======================================================================
+
+# Make sure you have this helper function already defined above:
+summarise_with_NA <- function(data, column) {
+  total <- nrow(data)
+  na_count <- sum(is.na(data[[column]]))
+  col_sym <- sym(column)
+  
+  summary_tbl <- data %>%
+    filter(!is.na(!!col_sym)) %>%
+    group_by(!!col_sym) %>%
+    summarise(`No. of respondents` = n(), .groups = "drop") %>%
+    mutate(`% of respondents` = round(100 * `No. of respondents` / sum(`No. of respondents`), 2)) %>%
+    mutate(Response = as.character(!!col_sym)) %>%
+    select(Response, `No. of respondents`, `% of respondents`) %>%
+    bind_rows(tibble(
+      Response = "NA responses",
+      `No. of respondents` = na_count,
+      `% of respondents` = round(100 * na_count / total, 2)
+    )) %>%
+    arrange(desc(Response == "NA responses"), desc(`No. of respondents`))
+  
+  return(summary_tbl)
+}
+
+# ======================================================================
+# Sociodemographic analysis
+# ======================================================================
+
+# Vector of all sociodemographic columns you want to summarise
+socio_vars <- c("gender", "age", "edu", "coast", "job_other", "mpa_prox", "location")
+
+# Create an Excel workbook for these results
+library(openxlsx)
+wb_socio <- createWorkbook()
+
+# Loop through variables, create summary, and export to Excel
+for (v in socio_vars) {
+  addWorksheet(wb_socio, v)
+  writeData(wb_socio, v, summarise_with_NA(df, v))
+}
+
+# Save workbook
+saveWorkbook(wb_socio, "Sociodemographic_Summaries.xlsx", overwrite = TRUE)
+
+cat("Export complete: 'Sociodemographic_Summaries.xlsx' created successfully.\n")
