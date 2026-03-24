@@ -32,6 +32,39 @@ library(maps)
 library(dplyr)
 
 
+install.packages("rnaturalearth")
+install.packages("remotes")
+install.packages("ggplot2")
+install.packages("devtools")
+install.packages("tidyverse")
+install.packages("ggthemes")
+install.packages("ggalt")
+install.packages("ggrepel")   # for annotations
+install.packages("viridis")   # for nice colours
+install.packages("broom")
+install.packages("treemapify")  # for making area graphs
+install.packages("wesanderson")
+install.packages("sf")
+install.packages("ggspatial")
+library(ggspatial)
+library(rnaturalearth)
+library(remotes)
+library(ggplot2)
+library(devtools)
+library(tidyverse)
+library(ggthemes) 
+library(ggalt)
+library(ggrepel)  # for annotations
+library(viridis)  # for nice colours
+library(broom)
+library(treemapify)  # for making area graphs
+library(wesanderson)
+library(sf)
+library(ggrepel)
+library(ggspatial)
+library(maps)
+library(dplyr)
+
 
 # Get map data for selected European countries
 europe <- map_data("world", region = c("Portugal", "Spain", "Italy", "France", "Belgium", "Sweden", "UK", "Ireland", "Germany", "Denmark","Germany", "Netherlands", "Switzerland", "Norway", "Finland", "Austria", "Poland", "Croatia", "Poland", "Czech Republic", "Slovakia", "Slovenia", "Hungary", "Bosnia and Herzegovina", "Ukraine", "Lituania", "Romania", "Belarus", "Albania", "Montenegro", "Greece", "Algeria", "Morocco", "Tunisia"))
@@ -44,7 +77,7 @@ europe <- europe %>%
 
 # Simple dataframe with survey locations
 lter <- data.frame(
-  place = c("Portugal, n=435", "Spain, n=111", "Italy, n=294", "Belgium, n=110", "Sweden, n=39"),
+  place = c("Portugal, n=436", "Spain, n=169", "Italy, n=245", "Belgium, n=113", "Sweden, n=39"),
   x = c(-9, -2, 16, 6, 16),
   y = c(39, 42.5, 42, 51, 59),
   number = c(250, 100, 200, 100, 80)
@@ -85,11 +118,15 @@ lter_map6 <- ggplot() +
   # North arrow and scale bar
   annotation_north_arrow(
     location = "tl",
-    which_north = "true",
+    which_north = "grid",
     pad_x = unit(0.2, "in"),
     pad_y = unit(0.2, "in"),
     style = north_arrow_fancy_orienteering
   )
+
+# Display the map
+print(lter_map6)
+
 
 # Display the map
 print(lter_map6)
