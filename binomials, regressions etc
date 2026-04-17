@@ -1,0 +1,879 @@
+####################
+# Modelling --------------------------------------------------------------------------------------------
+###################
+#install.packages("faraway") 
+#install.packages("lme4")
+#install.packages("visreg")
+#install.packages("ggeffects")
+library(ggeffects)
+library(visreg)
+library(broom)
+library(lme4)
+library(faraway)  
+library(dplyr)
+library(car)
+library(visreg)
+library(lme4)
+library(tidyverse)
+library(tidylog)
+library(ggplot2)
+library(MASS)
+
+
+
+##### RESPONSE VARIABLE: HEARD OF SYNGNATHIDS BEFORE? ######
+####################
+# Data exploration #
+####################
+
+# We create a new data frame with just the variables we want to model
+#PS still missing (21/02: job, hobbies, work ocean)
+prevknowledge_df <- df %>%
+  dplyr::select("syngnathid_prev",
+         "memberngo",
+         "age",
+         "gender",
+         "coast",
+         "mpa_prox",
+         "edu",
+         "location",
+         "nat",
+         "hobbies_glm",
+         "work_ocean_group",
+         "job_other") 
+
+# We get rid of NA's
+prevknowledge_df <- prevknowledge_df[complete.cases(prevknowledge_df),]
+#945 to 809 rows
+
+unique(prevknowledge_df$gender)
+
+# Outliers in Y? In this case, more than outliers, it's a matter of checking there aren't errors in the dataset. 
+boxplot(prevknowledge_df$syngnathid_prev, ylab = "Heard of syng?")
+dotchart(prevknowledge_df$syngnathid_prev, ylab = "Order of the data", xlab = "Heard of syng?")
+# No errors
+
+# Outliers in X?
+boxplot(as.integer(prevknowledge_df$gender), ylab = "gender")
+dotchart(as.integer(prevknowledge_df$gender), ylab = "Order of the data", xlab = "gender")
+boxplot(as.integer(prevknowledge_df$age), ylab = "age")
+dotchart(as.integer(prevknowledge_df$age), ylab = "Order of the data", xlab = "age")
+boxplot(as.integer(prevknowledge_df$edu), ylab = "edu")
+dotchart(as.integer(prevknowledge_df$edu), ylab = "Order of the data", xlab = "edu")
+boxplot(as.integer(prevknowledge_df$memberngo), ylab = "memberngo")
+dotchart(as.integer(prevknowledge_df$memberngo), ylab = "Order of the data", xlab = "memberngo")
+boxplot(as.integer(prevknowledge_df$coast), ylab = "coast")
+dotchart(as.integer(prevknowledge_df$coast), ylab = "Order of the data", xlab = "coast")
+boxplot(prevknowledge_df$mpa_prox, ylab = "mpa_prox")
+dotchart(prevknowledge_df$mpa_prox, ylab = "Order of the data", xlab = "mpa_prox")
+barplot(table(prevknowledge_df$location), ylab = "Count", xlab = "Location")
+dotchart(table(prevknowledge_df$location), xlab = "Frequency", ylab = "Location")
+barplot(table(prevknowledge_df$nat), ylab = "Count", xlab = "Nationality")
+dotchart(table(prevknowledge_df$nat), xlab = "Frequency", ylab = "Nationality")
+boxplot(as.integer(prevknowledge_df$hobbies), ylab = "hobbies")
+dotchart(as.integer(prevknowledge_df$hobbies), ylab = "Order of the data", xlab = "hobbies")
+boxplot(as.integer(prevknowledge_df$work_ocean), ylab = "Ocean job")
+dotchart(as.integer(prevknowledge_df$work_ocean), ylab = "Order of the data", xlab = "Ocean job")
+barplot(table(prevknowledge_df$job_other), ylab = "Count", xlab = "Job")
+dotchart(table(prevknowledge_df$job_other), xlab = "Frequency", ylab = "Job")
+
+#no outliers
+#############
+# Modelling #
+#############
+
+#transforming categorical data into factors for GLMs
+prevknowledge_df$location <- as.factor(prevknowledge_df$location)
+prevknowledge_df$nat <- as.factor(prevknowledge_df$nat)
+prevknowledge_df$job_other <- as.factor(prevknowledge_df$job_other)
+prevknowledge_df$age <- as.factor(prevknowledge_df$age)
+
+# Binomial full initial model
+glm1 <- glm(syngnathid_prev ~ + memberngo + age + gender + 
+              coast + mpa_prox + edu + location + hobbies_glm + work_ocean_group + job_other,
+            family = "binomial", data = na.omit(prevknowledge_df))
+
+
+
+#Warning message:glm.fit: fitted probabilities numerically 0 or 1 occurred
+#checking for complete separation
+#table(prevknowledge_df$syngnathid_prev, prevknowledge_df$gender)#tudo bem
+#table(prevknowledge_df$syngnathid_prev, prevknowledge_df$memberngo)#tudo bem
+#table(prevknowledge_df$syngnathid_prev, prevknowledge_df$age)#tudo bem
+#table(prevknowledge_df$syngnathid_prev, prevknowledge_df$coast)#tudo bem
+#table(prevknowledge_df$syngnathid_prev, prevknowledge_df$mpa_prox)#tudo bem
+#table(prevknowledge_df$syngnathid_prev, prevknowledge_df$edu)#tudo bem
+#table(prevknowledge_df$syngnathid_prev, prevknowledge_df$location)#tudo bem
+#table(prevknowledge_df$syngnathid_prev, prevknowledge_df$nat)# Highly Imbalanced and sparse Data = complete separation 
+
+nobs(glm1) # N = 837
+
+# Model selection
+step(glm1)
+summary(glm1)
+vif(glm2)
+#no serious multicollinearity
+
+glm2 <- glm(syngnathid_prev ~ location+ age + 
+              work_ocean_group + hobbies_glm, family = "binomial", data = na.omit(prevknowledge_df))
+Anova(glm2)
+
+#Analysis of Deviance Table (Type II tests)
+
+#Response: syngnathid_prev
+#LR Chisq Df Pr(>Chisq)    
+#location           18.779  5   0.002113 ** 
+#  age                15.859  5   0.007257 ** 
+#  work_ocean_group   17.205  1  3.355e-05 ***
+#  hobbies_glm        10.316  1   0.001319 ** 
+#  ---
+#  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+summary(glm2)
+coef(glm2)
+
+coef(glm2)
+#                (Intercept)               locationitaly   locationportugal (azores) 
+#-1.32035755                  0.16744506                  0.70845610 
+#locationportugal (mainland)               locationspain              locationsweden 
+#0.91286307                  0.23754574                  0.17717053 
+#age.L                       age.Q                       age.C 
+#-0.52704737                 -0.68896052                 -0.11676556 
+#age^4                       age^5         work_ocean_groupyes 
+#-0.54208080                 -0.07390765                  0.74922045 
+#hobbies_glmYes 
+#0.50327768  
+
+#checking model for overdispersion
+pearson_resid <- residuals(glm2, type = "pearson")
+dispersion_stat <- sum(pearson_resid^2) / df.residual(glm2)
+dispersion_stat
+plot(pearson_resid)
+#tudo bem
+
+#checking Deviance/Residual Degrees of Freedom Ratio: For a well-fitting model, the deviance divided by the residual degrees of freedom should be close to 1.
+deviance(glm2) / df.residual(glm2)
+#tudo bem
+
+plot(residuals(glm2, type = "deviance"))
+
+predicted_probs <- ggpredict(glm2, terms = "location")  # Replace with any categorical variable
+
+ggplot(predicted_probs, aes(x = x, y = predicted, ymin = conf.low, ymax = conf.high)) +
+  geom_pointrange() +
+  geom_line() +
+  labs(title = "Predicted Probability of Conservation Interest",
+       x = "NGO Membership",
+       y = "Predicted Probability") +
+  theme_minimal()
+
+##### RESPONSE VARIABLE:
+#Are you interested in more information on things you can do to help protect seahorses and pipefishes?
+# A.K.A inform_conservation_interest ######
+
+inf_con_int_df <- df %>%
+  dplyr::select("inform_conservation_interest",
+         "memberngo",
+         "age",
+         "gender",
+         "coast",
+         "mpa_prox",
+         "edu",
+         "location",
+         "nat",
+         "hobbies_glm",
+         "work_ocean_group",
+         "job_other") 
+
+inf_con_int_df$inform_conservation_interest[
+  inf_con_int_df$inform_conservation_interest == 2
+] <- NA
+
+unique(inf_con_int_df$inform_conservation_interest)
+
+# We get rid of NA's
+inf_con_int_df <- inf_con_int_df[complete.cases(inf_con_int_df),]
+#945 to 673 rows
+
+# Outliers in Y? In this case, more than outliers, it's a matter of checking there aren't errors in the dataset. 
+boxplot(inf_con_int_df$inform_conservation_interest, ylab = "Heard of syng?")
+dotchart(inf_con_int_df$inform_conservation_interest, ylab = "Order of the data", xlab = "Heard of syng?")
+# No errors
+
+#############
+# Modelling #
+#############
+
+#transforming categorical data into factors for GLMs
+inf_con_int_df$location <- as.factor(inf_con_int_df$location)
+inf_con_int_df$job_other <- as.factor(inf_con_int_df$job_other)
+
+# Binomial full initial model
+glm1 <- glm(inform_conservation_interest ~ + memberngo + age + gender + 
+              coast + mpa_prox + edu + location + hobbies_glm + work_ocean_group + job_other,
+            family = "binomial", data = na.omit(inf_con_int_df))
+
+nobs(glm1) # N = 698
+
+# Model selection
+step(glm1)
+summary(glm1)
+vif(glm1)
+#no serious multicollinearity
+
+glm2 <- glm(inform_conservation_interest ~ work_ocean_group + 
+              gender + hobbies_glm + location, family = "binomial", data = na.omit(inf_con_int_df))
+anova(glm2)
+#all significant
+#Response: inform_conservation_interest
+#Terms added sequentially (first to last)
+
+#Df Deviance Resid. Df Resid. Dev  Pr(>Chi)    
+#NULL                               697     611.52              
+#work_ocean_group  1   8.8658       696     602.65  0.002906 ** 
+#  gender            1   6.9643       695     595.69  0.008315 ** 
+#  hobbies_glm       1   6.2458       694     589.44  0.012449 *  
+#  location          5  26.5248       689     562.92 7.057e-05 ***
+
+#  ---
+#  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+#checking model for overdispersion
+
+summary(glm2)
+pearson_resid <- residuals(glm2, type = "pearson")
+dispersion_stat <- sum(pearson_resid^2) / df.residual(glm2)
+dispersion_stat
+plot(pearson_resid)
+#tudo bem
+
+#checking Deviance/Residual Degrees of Freedom Ratio: For a well-fitting model, the deviance divided by the residual degrees of freedom should be close to 1.
+deviance(glm2) / df.residual(glm2)
+#tudo bem
+
+plot(residuals(glm2, type = "deviance"))
+
+predicted_probs <- ggpredict(glm2, terms = "work_ocean_group")  # Replace with any categorical variable
+
+ggplot(predicted_probs, aes(x = x, y = predicted, ymin = conf.low, ymax = conf.high)) +
+  geom_pointrange() +
+  geom_line() +
+  labs(title = "",
+       x = "Hobbies",
+       y = "Pred. Prob. of previous knowledge of syngnathids") +
+  theme_minimal()
+
+##### RESPONSE VARIABLE:
+#“18. Would you be willing to engage in conservation initiatives to protect seahorses and pipefishes? 
+# A.K.A will_to_engange######
+
+
+engagement_df <- df %>%
+  dplyr::select("will_to_engage",
+         "memberngo",
+         "age",
+         "gender",
+         "coast",
+         "mpa_prox",
+         "edu",
+         "location",
+         "nat",
+         "hobbies_glm",
+         "work_ocean_group",
+         "job_other") 
+
+engagement_df$will_to_engage[
+  engagement_df$will_to_engage == 2
+] <- NA
+
+unique(engagement_df$will_to_engage)
+
+# We get rid of NA's
+engagement_df <- engagement_df[complete.cases(engagement_df),]
+#945 to 574 rows
+
+# Outliers in Y? In this case, more than outliers, it's a matter of checking there aren't errors in the dataset. 
+boxplot(engagement_df$will_to_engange, ylab = "Will to engage?")
+dotchart(engagement_df$will_to_engange, ylab = "Order of the data", xlab = "Will to engage?")
+# No errors
+
+#############
+# Modelling #
+#############
+
+#transforming categorical data into factors for GLMs
+engagement_df$location <- as.factor(engagement_df$location)
+engagement_df$job_other <- as.factor(engagement_df$job_other)
+
+# Binomial full initial model
+glm1 <- glm(will_to_engage ~memberngo + age + gender + 
+              coast + mpa_prox + edu + location + hobbies_glm + work_ocean_group + job_other,
+            family = "binomial", data = na.omit(engagement_df))
+
+nobs(glm1) # N = 574
+
+# Model selection
+step(glm1)
+summary(glm1)
+vif(glm1)
+#no serious multicollinearity
+
+glm2 <- glm(will_to_engage ~ gender + edu + location + hobbies_glm + work_ocean_group, family = "binomial", data = na.omit(engagement_df))
+Anova(glm2)
+Analysis of Deviance Table (Type II tests)
+
+#Response: will_to_engage
+#LR Chisq Df Pr(>Chisq)    
+#gender            12.1193  1  0.0004990 ***
+#  edu               15.5795  4  0.0036386 ** 
+#  location          22.6743  5  0.0003896 ***
+#  hobbies_glm       13.2014  1  0.0002797 ***
+#  work_ocean_group   6.9487  1  0.0083882 ** 
+#  ---
+#  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+#> 
+summary(glm2)
+#all significant
+
+#checking model for overdispersion
+pearson_resid <- residuals(glm2, type = "pearson")
+dispersion_stat <- sum(pearson_resid^2) / df.residual(glm2)
+dispersion_stat
+plot(pearson_resid)
+#tudo bem
+
+#checking Deviance/Residual Degrees of Freedom Ratio: For a well-fitting model, the deviance divided by the residual degrees of freedom should be close to 1.
+deviance(glm2) / df.residual(glm2)
+#tudo bem
+
+plot(residuals(glm2, type = "deviance"))
+
+#Analysis of Deviance Table (Type II tests)
+
+#Response: will_to_engange
+#LR Chisq Df Pr(>Chisq)    
+#  work_ocean   4.7227  1  0.0297661 *  
+#  edu         13.7286  4  0.0082137 **   
+#  job_other   24.0593  9  0.0042085 **  
+#  hobbies     13.2449  1  0.0002733 ***
+#  location    18.2703  5  0.0026260 **
+#  gender      16.3661  2  0.0002793 *** 
+#  ---
+#  Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+
+predicted_probs <- ggpredict(glm2, terms = "location")  # Replace with any categorical variable
+
+ggplot(predicted_probs, aes(x = x, y = predicted, ymin = conf.low, ymax = conf.high)) +
+  geom_pointrange() +
+  geom_line() +
+  labs(title = "",
+       x = "Location",
+       y = "Pred. Prob. of will to engage") +
+  theme_minimal()
+
+
+#new_data_location <- data.frame(
+#  work_ocean = mean(engagement_df$work_ocean, na.rm = TRUE),
+#  edu = mean(engagement_df$edu, na.rm = TRUE),
+#  job_other = "Other",
+#  hobbies = mean(engagement_df$hobbies, na.rm = TRUE),
+#  gender = 0,
+#  location = unique(engagement_df$location)  # Use all unique locations
+#)
+
+##### RESPONSE VARIABLE:
+#“18. True or false % right answers? 
+# Knowledge######
+
+
+rightanswers_df <- df %>%
+  dplyr::select("right_answers",
+         "memberngo",
+         "age",
+         "gender",
+         "coast",
+         "mpa_prox",
+         "edu",
+         "location",
+         "nat",
+         "hobbies_glm",
+         "work_ocean_group",
+         "job_other") 
+
+rightanswers_df$location
+
+unique(rightanswers_df$right_answers)
+
+# We get rid of NA's
+rightanswers_df <- rightanswers_df[complete.cases(rightanswers_df),]
+#989 to 876 rows
+
+# Outliers in Y? In this case, more than outliers, it's a matter of checking there aren't errors in the dataset. 
+boxplot(rightanswers_df$right_answers, ylab = "Will to engage?")
+dotchart(rightanswers_df$right_answers, ylab = "Order of the data", xlab = "Will to engage?")
+# No errors
+
+#############
+# Modelling #
+#############
+
+#transforming categorical data into factors for GLMs
+rightanswers_df$location <- as.factor(rightanswers_df$location)
+rightanswers_df$job_other <- as.factor(rightanswers_df$job_other)
+
+# fit binomial model to run step and select model predictors
+
+glm_bin <- glm(
+  cbind(right_answers,11-right_answers) ~ memberngo + age + gender + 
+    coast + mpa_prox + edu + location + hobbies_glm + work_ocean_group + job_other,
+  family = binomial,
+  data = na.omit(rightanswers_df)
+)
+
+step(glm_bin)
+#Refit final model as quasibinomial
+
+glm1 <- glm(
+  cbind(right_answers, 11 - right_answers) ~ memberngo 
+    +mpa_prox + edu + hobbies_glm + work_ocean_group,
+  family = quasibinomial,
+  data = na.omit(rightanswers_df)
+)
+nobs(glm1) # N = 876
+
+# Model selection
+summary(glm1)
+drop1(glm1, test="Chisq")
+#Single term deletions
+
+Anova(glm1)
+#Analysis of Deviance Table (Type II tests)
+#Response: cbind(right_answers, 11 - right_answers)
+#LR Chisq Df Pr(>Chisq)    
+#memberngo           3.813  1   0.050864 .  
+#mpa_prox            9.999  1   0.001567 ** 
+#  edu                18.405  4   0.001028 ** 
+#  hobbies_glm        32.301  1  1.320e-08 ***
+#  work_ocean_group   38.462  1  5.583e-10 ***
+#  ---
+#  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+
+##### RESPONSE VARIABLE:
+#“4. True or false % right answers? 
+# Knowledge######
+
+
+rightanswers_df <- df %>%
+  dplyr::select("right_answers",
+         "memberngo",
+         "age",
+         "gender",
+         "coast",
+         "mpa_prox",
+         "edu",
+         "location",
+         "nat",
+         "hobbies_glm",
+         "work_ocean_group",
+         "job_other") 
+
+rightanswers_df$location
+
+
+unique(rightanswers_df$right_answers)
+
+# We get rid of NA's
+rightanswers_df <- rightanswers_df[complete.cases(rightanswers_df),]
+#989 to 876 rows
+
+# Outliers in Y? In this case, more than outliers, it's a matter of checking there aren't errors in the dataset. 
+boxplot(rightanswers_df$right_answers, ylab = "Will to engage?")
+dotchart(rightanswers_df$right_answers, ylab = "Order of the data", xlab = "Will to engage?")
+# No errors
+
+#############
+# Modelling #
+#############
+
+#transforming categorical data into factors for GLMs
+rightanswers_df$location <- as.factor(rightanswers_df$location)
+rightanswers_df$job_other <- as.factor(rightanswers_df$job_other)
+
+# fit binomial model to run step and select model predictors
+
+glm_bin <- glm(
+  cbind(right_answers,11-right_answers) ~ memberngo + age + gender + 
+    coast + mpa_prox + edu + location + hobbies_glm + work_ocean_group + job_other,
+  family = binomial,
+  data = na.omit(rightanswers_df)
+)
+
+step(glm_bin)
+#Refit final model as quasibinomial
+
+glm1 <- glm(
+  cbind(right_answers, 11 - right_answers) ~ memberngo 
+  +mpa_prox + edu + hobbies_glm + work_ocean_group,
+  family = quasibinomial,
+  data = na.omit(rightanswers_df)
+)
+nobs(glm1) # N = 876
+
+# Model selection
+summary(glm1)
+drop1(glm1, test="Chisq")
+#Single term deletions
+
+Anova(glm1)
+#Analysis of Deviance Table (Type II tests)
+#Response: cbind(right_answers, 11 - right_answers)
+#LR Chisq Df Pr(>Chisq)    
+#memberngo           3.813  1   0.050864 .  
+#mpa_prox            9.999  1   0.001567 ** 
+#  edu                18.405  4   0.001028 ** 
+#  hobbies_glm        32.301  1  1.320e-08 ***
+#  work_ocean_group   38.462  1  5.583e-10 ***
+#  ---
+#  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+predicted_probs <- ggpredict(glm1, terms = "location")  # Replace with any categorical variable
+
+ggplot(predicted_probs, aes(x = x, y = predicted, ymin = conf.low, ymax = conf.high)) +
+  geom_pointrange() +
+  geom_line() +
+  labs(title = "",
+       x = "Location",
+       y = "Pred. Prob. of will to engage") +
+  theme_minimal()
+
+##### RESPONSE VARIABLE:
+#“4. perceived knowledge? 
+# Perceived Knowledge######
+
+
+perceived_knowledgedf <- df %>%
+  dplyr::select("perceived_knowledge",
+         "memberngo",
+         "age",
+         "gender",
+         "coast",
+         "mpa_prox",
+         "edu",
+         "location",
+         "nat",
+         "hobbies_glm",
+         "work_ocean_group",
+         "job_other") 
+
+
+unique(perceived_knowledgedf$perceived_knowledge)
+
+# We get rid of NA's
+perceived_knowledgedf <- perceived_knowledgedf[complete.cases(perceived_knowledgedf),]
+#989 to 876 rows
+
+perceived_knowledgedf$perceived_knowledge <- ordered(perceived_knowledgedf$perceived_knowledge)
+
+
+#############
+# Modelling #
+#############
+
+#transforming categorical data into factors for GLMs
+perceived_knowledgedf$location <- as.factor(perceived_knowledgedf$location)
+perceived_knowledgedf$job_other <- as.factor(perceived_knowledgedf$job_other)
+
+mod <- polr(
+  perceived_knowledge ~ memberngo + age + gender + 
+    coast + mpa_prox + edu + location + hobbies_glm + work_ocean_group + job_other,
+  data = perceived_knowledgedf,
+  Hess = TRUE
+)
+summary(mod)
+#gender and job insignificant effect
+mod1 <- polr(
+  perceived_knowledge ~ memberngo + age + 
+    coast + mpa_prox + edu + location + hobbies_glm + work_ocean_group,
+  data = perceived_knowledgedf,
+  Hess = TRUE
+)
+
+Anova(mod1)
+#Analysis of Deviance Table (Type II tests)
+
+#Response: perceived_knowledge
+#LR Chisq Df Pr(>Chisq)    
+#memberngo         10.6704  1   0.001089 ** 
+#  age               13.5497  5   0.018738 *  
+#  coast              3.2175  1   0.072854 .  
+#mpa_prox           3.6938  1   0.054615 .  
+#edu               10.1867  4   0.037398 *  
+#  location          10.1590  5   0.070854 .  
+#hobbies_glm       25.3286  1  4.835e-07 ***
+#  work_ocean_group  27.3340  1  1.712e-07 ***
+#  ---
+#  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+summary(mod1)
+
+predicted_probs <- ggpredict(mod1, terms = "location")  # Replace with any categorical variable
+
+ggplot(predicted_probs, aes(x = x, y = predicted, ymin = conf.low, ymax = conf.high)) +
+  geom_pointrange() +
+  geom_line() +
+  labs(title = "",
+       x = "Location",
+       y = "Pred. Prob. of perceived knowledge") +
+  theme_minimal()
+##### RESPONSE VARIABLE:
+#“17. conservation_importance? 
+# conservation_importance######
+
+
+conservation_importancedf <- df %>%
+  dplyr::select("conservation_importance",
+         "memberngo",
+         "age",
+         "gender",
+         "coast",
+         "mpa_prox",
+         "edu",
+         "location",
+         "nat",
+         "hobbies_glm",
+         "work_ocean_group",
+         "job_other") 
+
+
+unique(conservation_importancedf$conservation_importance)
+
+# We get rid of NA's
+conservation_importancedf <- conservation_importancedf[complete.cases(conservation_importancedf),]
+#989 to 822 rows
+
+conservation_importancedf$conservation_importance <- ordered(conservation_importancedf$conservation_importance)
+
+
+#############
+# Modelling #
+#############
+
+#transforming categorical data into factors for GLMs
+conservation_importancedf$location <- as.factor(conservation_importancedf$location)
+conservation_importancedf$job_other <- as.factor(conservation_importancedf$job_other)
+
+mod <- polr(
+  conservation_importance ~ memberngo + age + gender + 
+    coast + mpa_prox + edu + location + hobbies_glm + work_ocean_group + job_other,
+  data = conservation_importancedf,
+  Hess = TRUE
+)
+summary(mod)
+#gender and job insignificant effect
+mod1 <- polr(
+  conservation_importance ~ memberngo + 
+    location + hobbies_glm + work_ocean_group ,
+  data = conservation_importancedf,
+  Hess = TRUE
+)
+
+Anova(mod1)
+#Analysis of Deviance Table (Type II tests)
+
+#Response: conservation_importance
+#LR Chisq Df Pr(>Chisq)    
+#memberngo          6.2358  1  0.0125196 *  
+#  location          22.2914  5  0.0004609 ***
+#  hobbies_glm        7.8339  1  0.0051275 ** 
+#  work_ocean_group   6.0691  1  0.0137569 *  
+#  ---
+#  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+summary(mod1)
+
+predicted_probs <- ggpredict(mod1, terms = "location")  # Replace with any categorical variable
+
+ggplot(predicted_probs, aes(x = x, y = predicted, ymin = conf.low, ymax = conf.high)) +
+  geom_pointrange() +
+  geom_line() +
+  labs(title = "",
+       x = "Location",
+       y = "Pred. Prob. of perceived conservation importance") +
+  theme_minimal()
+
+pred_high <- ggpredict(mod1, terms = "location", type = "zi_prob") %>%
+  dplyr::filter(group == "Very important")
+
+ggplot(pred_high, aes(x = x, y = predicted)) +
+  geom_point() +
+  geom_line(group = 1) +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high), width = 0.1) +
+  labs(x = "Location", y = "P(Very important)") +
+  theme_minimal()
+
+##### RESPONSE VARIABLE:
+#particip_total 
+# likeliness to participate ######
+
+
+particip_total_df <- df %>%
+  dplyr::select("particip_total",
+         "memberngo",
+         "age",
+         "gender",
+         "coast",
+         "mpa_prox",
+         "edu",
+         "location",
+         "nat",
+         "hobbies_glm",
+         "work_ocean_group",
+         "job_other") 
+
+
+unique(particip_total_df$particip_total)
+
+# We get rid of NA's
+particip_total_df <- particip_total_df[complete.cases(particip_total_df),]
+#989 to 876 rows
+
+# Outliers in Y? In this case, more than outliers, it's a matter of checking there aren't errors in the dataset. 
+boxplot(particip_total_df$particip_total, ylab = "Will to engage?")
+dotchart(particip_total_df$particip_total, ylab = "Order of the data", xlab = "Will to engage?")
+# No errors
+
+#############
+# Modelling #
+#############
+
+#transforming categorical data into factors for GLMs
+particip_total_df$location <- as.factor(particip_total_df$location)
+particip_total_df$job_other <- as.factor(particip_total_df$job_other)
+
+# fit binomial model to run step and select model predictors
+
+glm_bin <- glm(
+  cbind(particip_total,27-particip_total) ~ memberngo + age + gender + 
+    coast + mpa_prox + edu + location + hobbies_glm + work_ocean_group + job_other,
+  family = binomial,
+  data = na.omit(particip_total_df)
+)
+
+step(glm_bin)
+#Refit final model as quasibinomial
+
+glm1 <- glm(
+  cbind(particip_total, 27 - particip_total) ~  memberngo + edu + location + hobbies_glm + work_ocean_group + job_other,
+  family = quasibinomial,
+  data = na.omit(particip_total_df)
+)
+nobs(glm1) # N = 876
+
+# Model selection
+summary(glm1)
+drop1(glm1, test="Chisq")
+#drop ngo membership
+#Single term deletions
+glm2 <- glm(
+  cbind(particip_total, 27 - particip_total) ~  edu + location + hobbies_glm + work_ocean_group + job_other,
+  family = quasibinomial,
+  data = na.omit(particip_total_df)
+)
+Anova(glm2)
+#Analysis of Deviance Table (Type II tests)
+
+#Response: cbind(particip_total, 27 - particip_total)
+#LR Chisq Df Pr(>Chisq)    
+#edu                26.852  4  2.129e-05 ***
+#  location           65.443  5  9.068e-13 ***
+#  hobbies_glm        19.825  1  8.487e-06 ***
+#  work_ocean_group    9.236  1   0.002373 ** 
+#  job_other          22.374  9   0.007767 ** 
+#  ---
+#  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+summary(glm2)
+
+
+predicted_probs <- ggpredict(glm2, terms = "location")  # Replace with any categorical variable
+
+ggplot(predicted_probs, aes(x = x, y = predicted, ymin = conf.low, ymax = conf.high)) +
+  geom_pointrange() +
+  geom_line() +
+  labs(title = "",
+       x = "Location",
+       y = "Pred. Prob. of participation in conservation actions") +
+  theme_minimal()
+##### RESPONSE VARIABLE:
+#“14. inform_interest
+# inform_interest######
+
+
+inform_interestdf <- df %>%
+  dplyr::select("inform_interest",
+                "memberngo",
+                "age",
+                "gender",
+                "coast",
+                "mpa_prox",
+                "edu",
+                "location",
+                "nat",
+                "hobbies_glm",
+                "work_ocean_group",
+                "job_other") 
+
+
+unique(inform_interestdf$inform_interest)
+
+# We get rid of NA's
+inform_interestdf <- inform_interestdf[complete.cases(inform_interestdf),]
+#989 to 873 rows
+
+inform_interestdf$inform_interest <- ordered(inform_interestdf$inform_interest)
+
+
+#############
+# Modelling #
+#############
+
+#transforming categorical data into factors for GLMs
+inform_interestdf$location <- as.factor(inform_interestdf$location)
+inform_interestdf$job_other <- as.factor(inform_interestdf$job_other)
+
+mod <- polr(
+  inform_interest ~ memberngo + age + gender + 
+    coast + mpa_prox + edu + location + hobbies_glm + work_ocean_group + job_other,
+  data = inform_interestdf,
+  Hess = TRUE
+)
+summary(mod)
+#drop insignificant effect
+mod1 <- polr(
+  inform_interest ~ memberngo + 
+     edu + location + hobbies_glm + work_ocean_group,
+  data = inform_interestdf,
+  Hess = TRUE
+)
+
+Anova(mod1)
+#Analysis of Deviance Table (Type II tests)
+
+#Response: conservation_importance
+#LR Chisq Df Pr(>Chisq)    
+#memberngo          6.2358  1  0.0125196 *  
+#  location          22.2914  5  0.0004609 ***
+#  hobbies_glm        7.8339  1  0.0051275 ** 
+#  work_ocean_group   6.0691  1  0.0137569 *  
+#  ---
+#  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+summary(mod1)
+
+predicted_probs <- ggpredict(mod1, terms = "location")  # Replace with any categorical variable
+
+ggplot(predicted_probs, aes(x = x, y = predicted, ymin = conf.low, ymax = conf.high)) +
+  geom_pointrange() +
+  geom_line() +
+  labs(title = "",
+       x = "Location",
+       y = "Pred. Prob. of interest in infrormation about syngn.") +
+  theme_minimal()
